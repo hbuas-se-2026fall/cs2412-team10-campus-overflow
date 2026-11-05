@@ -22,14 +22,16 @@ public class ReputationApiImpl implements ReputationApi {
 
     @Override
     public ReputationSummary summary(long userId) {
-        return accounts.findByUserId(userId)
-                .map(a -> new ReputationSummary(a.userId(), a.reputation()))
-                .orElse(new ReputationSummary(userId, 0));
+        ReputationAccount account = accounts.findByUserId(userId)
+                .orElseGet(() -> ReputationAccount.open(userId, 0));
+        return new ReputationSummary(userId, account.reputation());
     }
 
     @Override
     public Map<Long, Integer> reputations(Collection<Long> userIds) {
-        return accounts.findAllByUserId(userIds).stream()
+        Map<Long, Integer> result = accounts.findAllByUserId(userIds).stream()
                 .collect(Collectors.toMap(ReputationAccount::userId, ReputationAccount::reputation));
+        userIds.forEach(id -> result.putIfAbsent(id, 0));
+        return result;
     }
 }
