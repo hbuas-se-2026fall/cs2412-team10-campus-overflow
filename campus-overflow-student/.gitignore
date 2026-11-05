@@ -1,6 +1,8 @@
 target/
 node_modules/
 dist/
+# TypeScript 增量编译缓存（tsc -b 生成，不应入库）
+*.tsbuildinfo
 *.log
 .idea/
 .vscode/
