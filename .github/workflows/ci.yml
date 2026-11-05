@@ -1,4 +1,11 @@
 # CampusOverflow 持续集成流水线（对应 arc42 第 10 章适应度函数与第 7 章部署视图）
+#
+# 位置说明：本文件必须位于仓库根的 .github/workflows/ 下，GitHub 才会调度。
+# 原先它被放在 campus-overflow-student/.github/workflows/ci.yml（随课程模板整包导入），
+# 该路径不在 GitHub 的识别范围内，导致流水线自建仓以来从未触发过一次。
+#
+# 路径说明：课程脚手架位于 campus-overflow-student/ 子目录，而模板中的命令按
+# 「仓库根 = 脚手架根」编写，因此此处所有构建路径都加了 campus-overflow-student/ 前缀。
 name: CI
 
 on:
@@ -6,11 +13,16 @@ on:
     branches: [main, develop, "sprint/**"]
   pull_request:
     branches: [main, develop]
+  # 允许在 Actions 页面手动触发，便于验证流水线本身是否可用
+  workflow_dispatch:
 
 jobs:
   backend:
     name: 后端构建与验证
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: campus-overflow-student
     steps:
       - uses: actions/checkout@v4
 
@@ -20,6 +32,7 @@ jobs:
           java-version: "21"
           distribution: temurin
           cache: maven
+          cache-dependency-path: campus-overflow-student/backend/pom.xml
 
       # 阶段 1：编译（模块依赖不成环由 Maven 保证）
       - name: 编译
@@ -38,6 +51,9 @@ jobs:
         run: mvn -B -f backend/pom.xml verify -DskipITs -Djacoco.skip=false
 
       # 阶段 5：集成测试（Testcontainers 拉起真实 MySQL + Redis）
+      # CampusOverflowFlowIT 当前按团队决策 D1 / 任务 T-038 处于 @Disabled（链路含 S3 范围的
+      # 声誉结算、搜索投影、通知投递），本阶段在 Sprint 3 恢复前不会实际执行用例，
+      # 但保留该阶段以便恢复时无需改动流水线。
       - name: 集成测试
         run: mvn -B -f backend/pom.xml verify -Dsurefire.skip=true
 
@@ -46,24 +62,26 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-reports
-          path: "**/target/*-reports/*.xml"
+          path: "campus-overflow-student/**/target/*-reports/*.xml"
 
   frontend:
     name: 前端构建
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # 不启用 npm 缓存：仓库未提交 package-lock.json，setup-node 的 cache 会因
+      # 依赖文件不存在而直接失败；后续补入 lock 文件后可加回 cache: npm
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
       - name: 安装依赖
-        working-directory: frontend
+        working-directory: campus-overflow-student/frontend
         run: npm install --no-audit --no-fund
       - name: 类型检查
-        working-directory: frontend
+        working-directory: campus-overflow-student/frontend
         run: npm run typecheck
       - name: 构建
-        working-directory: frontend
+        working-directory: campus-overflow-student/frontend
         run: npm run build
 
   images:
@@ -74,6 +92,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 构建后端镜像
-        run: docker build -f deploy/backend.Dockerfile -t campus-overflow-backend:${{ github.sha }} .
+        run: docker build -f campus-overflow-student/deploy/backend.Dockerfile -t campus-overflow-backend:${{ github.sha }} campus-overflow-student
       - name: 构建前端镜像
-        run: docker build -f deploy/frontend.Dockerfile -t campus-overflow-web:${{ github.sha }} .
+        run: docker build -f campus-overflow-student/deploy/frontend.Dockerfile -t campus-overflow-web:${{ github.sha }} campus-overflow-student
