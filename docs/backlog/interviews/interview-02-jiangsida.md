@@ -1,14 +1,3 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: 31e7cf1207b8d082b268a2ac107cd18b_3a666bc6d26a11f196c5525400248c00
-    ReservedCode1: ICid2gbTzsXUi9july5/gGMEn7AsL9UNqfEMKN9sQ/+Qa2cKE/rbGsAqbbf0CJRyx7ap30CFUCBQGiYLik3hKH3wZAvzZ8eueLUHMC7EffbBRXovlJabupchaHgOVZeq8uFVhOFAyWjxurP7sT0zymXc+fvydA6Pew9eVAnuarmun//x2R45j32LdD0=
-    ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: 31e7cf1207b8d082b268a2ac107cd18b_3a666bc6d26a11f196c5525400248c00
-    ReservedCode2: ICid2gbTzsXUi9july5/gGMEn7AsL9UNqfEMKN9sQ/+Qa2cKE/rbGsAqbbf0CJRyx7ap30CFUCBQGiYLik3hKH3wZAvzZ8eueLUHMC7EffbBRXovlJabupchaHgOVZeq8uFVhOFAyWjxurP7sT0zymXc+fvydA6Pew9eVAnuarmun//x2R45j32LdD0=
----
-
 # 用户访谈记录 02 — 江思达（高频回答者视角）
 
 <!-- 填写说明（渲染时不可见，填完可删）
@@ -118,5 +107,3 @@ A：
 ---
 
 ## 四、访谈人观察（可选）
-
-*（内容由AI生成，仅供参考）*

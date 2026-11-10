@@ -1,14 +1,3 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: 31e7cf1207b8d082b268a2ac107cd18b_391c6f36d26a11f18460525400393706
-    ReservedCode1: qJ8BrbJXAGGiSYsKHHgXOnwjtkM3XxhZcf2unfRlqUpeeaLzkO8rbPYKvU6yrPzKveCXZaBHY3Q2cFf+SRWdZp8wG/2sv/+9OmTpy/0AxpPiHpS7ewgjkOPpg6/9WrZSFfQ5hiWWx6W9Ad/IO2JQ+GFVrC6fWbNhB/rOJZY0tQTURxjwC4U0j2PC8Hk=
-    ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: 31e7cf1207b8d082b268a2ac107cd18b_391c6f36d26a11f18460525400393706
-    ReservedCode2: qJ8BrbJXAGGiSYsKHHgXOnwjtkM3XxhZcf2unfRlqUpeeaLzkO8rbPYKvU6yrPzKveCXZaBHY3Q2cFf+SRWdZp8wG/2sv/+9OmTpy/0AxpPiHpS7ewgjkOPpg6/9WrZSFfQ5hiWWx6W9Ad/IO2JQ+GFVrC6fWbNhB/rOJZY0tQTURxjwC4U0j2PC8Hk=
----
-
 # 用户访谈记录 01 — 柯博（高频提问者视角）
 
 <!-- 填写说明（渲染时不可见，填完可删）
@@ -123,5 +112,3 @@ A：
 ## 四、访谈人观察（可选）
 
 > 现场观察到的非语言信息或环境细节，例如：受访者现场演示了翻聊天记录的过程、耗时约 __ 分钟。
-
-*（内容由AI生成，仅供参考）*

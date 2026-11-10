@@ -1,14 +1,3 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: 31e7cf1207b8d082b268a2ac107cd18b_3b9147d0d26a11f196c5525400248c00
-    ReservedCode1: d2tVq84z698j/xrx51134jYdYstYYKLE/QjJz7JfRJ6Lelz06yNFRO0AHCOweWgjkROQsA6XEkK0yel+sH0lJtDOWU2qCHL0kkLFYIVSzpXGGBe0Q1szKr3ffuMceH9o4D5R9aIVidSGBmIBQ+UlVNpc1VoP1dN+7/m/eqF/VEjLJkrkhyinKMe36/w=
-    ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: 31e7cf1207b8d082b268a2ac107cd18b_3b9147d0d26a11f196c5525400248c00
-    ReservedCode2: d2tVq84z698j/xrx51134jYdYstYYKLE/QjJz7JfRJ6Lelz06yNFRO0AHCOweWgjkROQsA6XEkK0yel+sH0lJtDOWU2qCHL0kkLFYIVSzpXGGBe0Q1szKr3ffuMceH9o4D5R9aIVidSGBmIBQ+UlVNpc1VoP1dN+7/m/eqF/VEjLJkrkhyinKMe36/w=
----
-
 # 用户访谈记录 03 — 何欣怡（新生 / 低活跃浏览者视角）
 
 <!-- 填写说明（渲染时不可见，填完可删）
@@ -115,5 +104,3 @@ A：
 ## 四、访谈人观察（可选）
 
 > 若受访者现场演示了检索过程，记录：演示耗时 __ 分钟，操作步骤 __ 步，卡在第 __ 步。
-
-*（内容由AI生成，仅供参考）*
