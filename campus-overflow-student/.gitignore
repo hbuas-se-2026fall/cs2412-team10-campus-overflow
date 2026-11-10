@@ -9,3 +9,6 @@ dist/
 *.iml
 .DS_Store
 .env
+
+# Lab 4 T-033: JSON 日志运行目录（logback-spring.xml 默认写入 logs/）
+logs/

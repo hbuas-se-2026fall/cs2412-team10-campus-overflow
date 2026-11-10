@@ -116,6 +116,10 @@ public final class QaTestFixtures {
             store.remove(key(vote.voterId(), vote.targetType(), vote.targetId()));
         }
 
+        public int size() {
+            return store.size();
+        }
+
         private static String key(long voterId, TargetType type, long targetId) {
             return voterId + ":" + type + ":" + targetId;
         }

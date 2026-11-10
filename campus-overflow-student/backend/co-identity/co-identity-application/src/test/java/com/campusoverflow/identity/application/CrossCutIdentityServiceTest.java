@@ -16,6 +16,7 @@ import com.campusoverflow.identity.domain.UserRepository;
 import com.campusoverflow.shared.audit.AuditTrail;
 import com.campusoverflow.shared.domain.BusinessRuleException;
 import com.campusoverflow.shared.domain.ConflictException;
+import com.campusoverflow.shared.domain.ForbiddenException;
 import com.campusoverflow.shared.domain.NotFoundException;
 import com.campusoverflow.shared.event.IntegrationEvent;
 import com.campusoverflow.shared.event.IntegrationEventPublisher;
@@ -179,6 +180,52 @@ class CrossCutIdentityServiceTest {
         long studentId = registerStudent("20230008", "未知课程");
         assertThatThrownBy(() -> courseService.join(new Actor(studentId, "未知课程", Role.STUDENT), 9999L))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    // ---- US-004 建课与角色调整 ----
+
+    @Test
+    @DisplayName("US-004 建课：创建者自动成为该课程的 TEACHER 成员")
+    void createAddsCreatorAsTeacherMember() {
+        Actor teacher = new Actor(901, "陈老师", Role.TEACHER);
+
+        long courseId = courseService.create(teacher, new CreateCourseCommand("CS3001", "软件工程导论", "2026-秋"));
+
+        CourseMember member = courses.findMember(courseId, teacher.userId()).orElseThrow();
+        assertThat(member.role()).isEqualTo(CourseRole.TEACHER);
+        assertThat(member.role().canManage()).isTrue();
+    }
+
+    @Test
+    @DisplayName("US-004 建课冲突：同一学期内课程代码唯一，换学期则允许（ID-2004）")
+    void createRejectsDuplicateCodeInSameTerm() {
+        Actor teacher = new Actor(902, "李老师", Role.TEACHER);
+        courseService.create(teacher, new CreateCourseCommand("CS3002", "编译原理", "2026-秋"));
+
+        assertThatThrownBy(() -> courseService.create(teacher,
+                new CreateCourseCommand("CS3002", "编译原理（重修班）", "2026-秋")))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("同代码课程");
+
+        assertThat(courseService.create(teacher, new CreateCourseCommand("CS3002", "编译原理", "2027-春")))
+                .isPositive();
+    }
+
+    @Test
+    @DisplayName("US-004 角色调整：只有课程教师或管理员可以调整成员角色（ID-3003）")
+    void onlyCourseManagerCanAssignRole() {
+        Actor teacher = new Actor(903, "赵老师", Role.TEACHER);
+        long courseId = courseService.create(teacher, new CreateCourseCommand("CS3003", "计算机网络", "2026-秋"));
+        long studentId = registerStudent("20230009", "角色调整");
+        Actor student = new Actor(studentId, "角色调整", Role.STUDENT);
+        courseService.join(student, courseId);
+
+        assertThatThrownBy(() -> courseService.assignRole(student, courseId, studentId, CourseRole.TA))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessageContaining("调整成员角色");
+
+        courseService.assignRole(teacher, courseId, studentId, CourseRole.TA);
+        assertThat(courses.findMember(courseId, studentId).orElseThrow().role()).isEqualTo(CourseRole.TA);
     }
 
     private long newCourse(String code, String name) {

@@ -68,7 +68,7 @@
 | --- | --- | --- |
 | 六上下文 + 共享内核的 Maven 多模块结构 | 27 个模块，`mvn clean install -DskipITs` 实测 BUILD SUCCESS | 模板 + `ed4d212` |
 | co-qa 全部 `TODO(S2)` | **0 个残留**，S2 范围代码已写完 | `ed4d212`（江思达，10-28 合并） |
-| 单元测试 | 14 个测试类 / 55 个用例，0 失败 0 跳过 | 实测 |
+| 单元测试 | 18 个测试类 / 91 个用例，0 失败 0 跳过 | 实测（2026-11-10） |
 | 架构约束测试 | `ArchitectureTest`（FF-1~FF-6）通过 | 实测 |
 | Flyway 五上下文迁移脚本 | 脚本齐全（platform/identity/qa/reputation/discovery），未在空库实跑 | 模板 |
 | Postman Collection | 16 个请求，含 `POST /api/v1/questions` 成功用例与 CSRF/登录前置 | `ed4d212` |
@@ -92,7 +92,7 @@
 ## 五、DoD（完成定义，沿用章程并补充 Lab 4 口径）
 
 1. 代码经 PR 提交，**至少一名队友 review 并回复 LGTM**，由 SM 合并；
-2. 单元测试全绿（当前基线 55 个用例，只增不减）；
+2. 单元测试全绿（当前基线 91 个用例，只增不减）；
 3. 构建口径达标：`mvn clean install -DskipITs` BUILD SUCCESS（D1 约定）；
 4. 涉及接口的，Postman 集合同步更新并留存运行证据；
 5. 新增架构决策必须落 ADR，并在 `campus-overflow-student/docs/adr/README.md` 登记；

@@ -79,6 +79,7 @@ public class Question {
         if (!actorManagesCourse && !actor.is(this.authorId)) {
             throw new ForbiddenException("QA-1008", "只有提问者或课程管理者可以采纳回答");
         }
+        ensureNotDeleted();
         if (this.acceptedAnswerId != null) {
             throw new ConflictException("QA-1008", "每个问题只能采纳一个回答");
         }
