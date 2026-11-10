@@ -18,6 +18,7 @@ import com.campusoverflow.qa.domain.Question;
 import com.campusoverflow.qa.domain.TargetType;
 import com.campusoverflow.qa.domain.Tags;
 import com.campusoverflow.qa.domain.Title;
+import com.campusoverflow.qa.domain.Vote;
 import com.campusoverflow.shared.domain.BusinessRuleException;
 import com.campusoverflow.shared.domain.ForbiddenException;
 import com.campusoverflow.shared.security.Actor;
@@ -106,6 +107,22 @@ class AnswerAndVoteServiceTest {
         assertThat(voteEvents).hasSize(2);
         assertThat(voteEvents.get(1).oldValue()).isEqualTo(1);
         assertThat(voteEvents.get(1).newValue()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("投票：同一用户对同一内容只保留一条记录，重复投票更新原记录而不是再插一条")
+    void secondVoteOnSameTargetUpdatesInsteadOfInserting() {
+        long answerId = answerService.submit(hong, questionId, "关键在于黑高这个不变量，仅靠变色无法调整。");
+
+        voteService.cast(ming, TargetType.ANSWER, answerId, 1);
+        Vote first = votes.find(ming.userId(), TargetType.ANSWER, answerId).orElseThrow();
+
+        voteService.cast(ming, TargetType.ANSWER, answerId, -1);
+        Vote second = votes.find(ming.userId(), TargetType.ANSWER, answerId).orElseThrow();
+
+        assertThat(votes.size()).isEqualTo(1);
+        assertThat(second.id()).isEqualTo(first.id());
+        assertThat(second.value()).isEqualTo(-1);
     }
 
     @Test
