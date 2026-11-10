@@ -2,10 +2,7 @@ package com.campusoverflow.reputation.application;
 
 import com.campusoverflow.identity.api.IdentityApi;
 import com.campusoverflow.identity.api.UserSummary;
-import com.campusoverflow.reputation.application.ReputationProfileView.BadgeView;
-import com.campusoverflow.reputation.domain.BadgeAward;
 import com.campusoverflow.reputation.domain.BadgeRepository;
-import com.campusoverflow.reputation.domain.LedgerEntry;
 import com.campusoverflow.reputation.domain.LedgerRepository;
 import com.campusoverflow.reputation.domain.ReputationAccount;
 import com.campusoverflow.reputation.domain.ReputationAccountRepository;
@@ -37,32 +34,26 @@ public class ReputationQueryService {
 
     public ReputationProfileView profile(long userId, Actor viewerOrNull) {
         ReputationAccount account = accounts.findByUserId(userId)
-                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "声誉账户不存在"));
-        String displayName = identity.findUser(userId).map(UserSummary::displayName).orElse("已注销用户");
-        List<BadgeView> badgeViews = badges.findByUser(userId).stream()
-                .map(a -> new BadgeView(a.type().name(), a.type().displayName(), a.type().description(),
-                        a.awardedAt()))
+                .orElseGet(() -> ReputationAccount.open(userId, 0));
+        UserSummary user = identity.findUser(userId).orElse(null);
+        String displayName = user != null ? user.displayName() : "用户" + userId;
+        boolean selfOrAdmin = viewerOrNull != null && (viewerOrNull.is(userId) || viewerOrNull.isAdmin());
+        Integer available = selfOrAdmin ? account.availablePoints() : null;
+        Integer frozen = selfOrAdmin ? account.frozenPoints() : null;
+        List<ReputationProfileView.BadgeView> badgeViews = badges.findByUser(userId).stream()
+                .map(a -> new ReputationProfileView.BadgeView(a.type().name(), a.type().displayName(),
+                        a.type().description(), a.awardedAt()))
                 .toList();
-        boolean own = viewerOrNull != null && viewerOrNull.is(userId);
-        return new ReputationProfileView(userId, displayName, account.reputation(),
-                own ? account.availablePoints() : null,
-                own ? account.frozenPoints() : null,
-                badgeViews);
+        return new ReputationProfileView(userId, displayName, account.reputation(), available, frozen, badgeViews);
     }
 
     /** 声誉流水属于个人数据：仅本人与管理员可查看。 */
     public PageResult<LedgerEntryView> ledger(long userId, Actor viewer, PageRequest page) {
-        accounts.findByUserId(userId)
-                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "声誉账户不存在"));
-        boolean allowed = viewer != null && (viewer.is(userId) || viewer.isAdmin());
-        if (!allowed) {
-            throw new ForbiddenException("FORBIDDEN", "仅本人或管理员可查看声誉流水");
+        if (viewer == null || (!viewer.is(userId) && !viewer.isAdmin())) {
+            throw new ForbiddenException("REP-3002", "仅本人与管理员可查看声誉流水");
         }
-        PageResult<LedgerEntry> entries = ledger.findByUser(userId, page);
-        List<LedgerEntryView> views = entries.items().stream()
+        return ledger.findByUser(userId, page)
                 .map(e -> new LedgerEntryView(e.id(), e.reason().name(), e.reason().label(), e.delta(),
-                        e.refType(), e.refId(), e.createdAt()))
-                .toList();
-        return new PageResult<>(views, entries.total(), page.page(), page.size());
+                        e.refType(), e.refId(), e.createdAt()));
     }
 }

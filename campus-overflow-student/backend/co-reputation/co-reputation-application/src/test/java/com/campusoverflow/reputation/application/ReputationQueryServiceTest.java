@@ -93,10 +93,16 @@ class ReputationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("档案：账户不存在时抛出 NotFoundException")
-    void profileUnknownAccountThrows() {
-        assertThatThrownBy(() -> service.profile(999L, ming))
-                .isInstanceOf(NotFoundException.class);
+    @DisplayName("档案：账户不存在时返回空档案")
+    void profileUnknownAccountReturnsEmptyProfile() {
+        ReputationProfileView p = service.profile(999L, ming);
+
+        assertThat(p.userId()).isEqualTo(999);
+        assertThat(p.displayName()).isEqualTo("用户999");
+        assertThat(p.reputation()).isEqualTo(0);
+        assertThat(p.availablePoints()).isNull();
+        assertThat(p.frozenPoints()).isNull();
+        assertThat(p.badges()).isEmpty();
     }
 
     @Test
@@ -139,10 +145,10 @@ class ReputationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("流水：账户不存在时抛出 NotFoundException")
-    void ledgerUnknownAccountThrows() {
-        assertThatThrownBy(() -> service.ledger(999L, ming, new PageRequest(1, 20)))
-                .isInstanceOf(NotFoundException.class);
+    @DisplayName("流水：非本人与非管理员查看他人流水时抛出 ForbiddenException")
+    void ledgerNonSelfViewForbidden() {
+        assertThatThrownBy(() -> service.ledger(999L, hong, new PageRequest(1, 20)))
+                .isInstanceOf(ForbiddenException.class);
     }
 
     private static ReputationAccount account(long userId, int reputation, int available, int frozen) {

@@ -92,3 +92,19 @@ docs/ddd/glossary.md
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
 | v1.0 | 2026-11-04 | 首版：四份产物重写并与代码对齐，新增两张图与本文档 |
+
+---
+
+## 声誉域交付补充（柯博 · Dev/QA）
+
+声誉链路（`backend/co-reputation`）的补充材料与验收结论，作为聚合识别清单的声誉域细化版本：
+
+| 材料 | 文件 |
+| --- | --- |
+| 声誉域聚合识别清单 | [声誉域-聚合识别清单.md](./声誉域-聚合识别清单.md) |
+| 声誉域读模型清单 | [声誉域-读模型清单.md](./声誉域-读模型清单.md) |
+| 不变式核对结论 | [声誉域-不变式核对结论.md](./声誉域-不变式核对结论.md) |
+
+**覆盖聚合**：`ReputationAccount`（冻结/可用守恒）、`Bounty`（OPEN→AWARDED/EXPIRED 状态机）、`BadgeAward`、`LedgerEntry`（只追加，幂等键 `(eventId, userId, reason)`）。
+
+**验收状态**：领域层 25 个 TODO 方法全部实现；`BountyAndAccountTest` 6 项 + `ReputationRulebookTest` 9 项全绿（15/15）；JaCoCo 领域层覆盖率门禁 0.70 通过（`All coverage checks have been met`）。

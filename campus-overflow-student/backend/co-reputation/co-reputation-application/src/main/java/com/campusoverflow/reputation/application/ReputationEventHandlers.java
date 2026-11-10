@@ -13,6 +13,7 @@ import com.campusoverflow.reputation.domain.ReputationAccountRepository;
 import com.campusoverflow.reputation.domain.ReputationReason;
 import com.campusoverflow.reputation.domain.ReputationRulebook;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import org.springframework.context.event.EventListener;
@@ -47,36 +48,54 @@ public class ReputationEventHandlers {
     @EventListener
     @Transactional
     public void on(UserRegisteredEvent e) {
-        // TODO(S3)：实现 ReputationEventHandlers.on——参考领域单元测试与 arc42 文档中的业务规则
-        throw new UnsupportedOperationException("TODO(S3)：ReputationEventHandlers.on 尚未实现");
+        if (accounts.findByUserId(e.userId()).isPresent()) {
+            return; // 幂等：已开立账户
+        }
+        accounts.save(ReputationAccount.open(e.userId(), ReputationRulebook.initialPoints(e.role())));
     }
 
     /** 场景 R-2 的异步后半段：采纳 → 回答者 +15 → 徽章 → 悬赏结算。 */
     @EventListener
     @Transactional
     public void on(AnswerAcceptedEvent e) {
-        // TODO(S3)：实现 ReputationEventHandlers.on——参考领域单元测试与 arc42 文档中的业务规则
-        throw new UnsupportedOperationException("TODO(S3)：ReputationEventHandlers.on 尚未实现");
+        ledgerService.record(e.answerAuthorId(), e.eventId(), ReputationReason.ANSWER_ACCEPTED,
+                ReputationRulebook.acceptedDelta(e.answerAuthorId(), e.questionAuthorId()), "answer", e.answerId());
+        long acceptedCount = ledger.countByUserAndReason(e.answerAuthorId(), ReputationReason.ANSWER_ACCEPTED);
+        BadgePolicy.forAcceptedCount(acceptedCount).forEach(t -> badges.grant(e.answerAuthorId(), t));
+        bounties.settleOnAccept(e.questionId(), e.answerId(), e.answerAuthorId(), e.eventId());
     }
 
     @EventListener
     @Transactional
     public void on(VoteCastEvent e) {
-        // TODO(S3)：实现 ReputationEventHandlers.on——参考领域单元测试与 arc42 文档中的业务规则
-        throw new UnsupportedOperationException("TODO(S3)：ReputationEventHandlers.on 尚未实现");
+        int rawDelta = ReputationRulebook.voteDelta(e.oldValue(), e.newValue());
+        if (rawDelta == 0) {
+            return;
+        }
+        boolean question = "QUESTION".equals(e.targetType());
+        ReputationReason reason = question ? ReputationReason.QUESTION_VOTE : ReputationReason.ANSWER_VOTE;
+        int delta = rawDelta;
+        if (rawDelta > 0) {
+            Instant since = LocalDate.now(clock).atStartOfDay(ZoneOffset.UTC).toInstant();
+            int gainedToday = ledger.sumPositiveVoteDeltaSince(e.targetAuthorId(), since);
+            delta = ReputationRulebook.applyDailyCap(rawDelta, gainedToday);
+            if (delta == 0) {
+                return; // 当日正向声誉已达上限
+            }
+        }
+        ledgerService.record(e.targetAuthorId(), e.eventId(), reason, delta,
+                question ? "question" : "answer", e.targetId());
     }
 
     @EventListener
     @Transactional
     public void on(AnswerSubmittedEvent e) {
-        // TODO(S3)：实现 ReputationEventHandlers.on——参考领域单元测试与 arc42 文档中的业务规则
-        throw new UnsupportedOperationException("TODO(S3)：ReputationEventHandlers.on 尚未实现");
+        badges.grant(e.answerAuthorId(), BadgeType.FIRST_ANSWER);
     }
 
     @EventListener
     @Transactional
     public void on(AnswerEndorsedEvent e) {
-        // TODO(S3)：实现 ReputationEventHandlers.on——参考领域单元测试与 arc42 文档中的业务规则
-        throw new UnsupportedOperationException("TODO(S3)：ReputationEventHandlers.on 尚未实现");
+        badges.grant(e.answerAuthorId(), BadgeType.TEACHER_ENDORSED);
     }
 }
