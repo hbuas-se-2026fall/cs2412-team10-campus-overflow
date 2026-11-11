@@ -1,0 +1,24 @@
+#!/bin/sh
+# 前端提交前静态门禁：ESLint（含 any 拦截）+ Prettier 格式校验。
+#
+# 为什么不使用 lint-staged：
+#   lint-staged v15 在 "Backing up original state" 阶段会创建仓库索引锁，
+#   与 git 2.55 (Windows) 提交过程中已持有的 index.lock 冲突，导致合规代码也被
+#   "lint-staged failed due to a git error" 误拦。此处改为直接对前端目录做全量检查：
+#   效果等价、无版本兼容风险、行为可预期；CI 侧同样执行 pnpm lint / pnpm format:check 兜底。
+# 提示信息使用英文，避免 Windows 控制台（GBK 代码页）显示乱码。
+set -e
+cd campus-overflow-student/frontend
+
+if [ ! -f node_modules/.bin/eslint ]; then
+  echo "[pre-commit] frontend dependencies not installed, skip ESLint / Prettier (CI will check)."
+  exit 0
+fi
+
+echo "[pre-commit] ESLint (incl. @typescript-eslint/no-explicit-any) ..."
+./node_modules/.bin/eslint . --max-warnings=0
+
+echo "[pre-commit] Prettier format check ..."
+./node_modules/.bin/prettier --check .
+
+echo "[pre-commit] passed."

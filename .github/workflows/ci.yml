@@ -74,20 +74,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # 不启用 npm 缓存：仓库未提交 package-lock.json，setup-node 的 cache 会因
-      # 依赖文件不存在而直接失败；后续补入 lock 文件后可加回 cache: npm
+      # 前端统一使用 pnpm：以 pnpm-lock.yaml 为准做可复现安装，
+      # 安装完成后由 package.json 的 prepare 触发 husky，CI 只跑静态检查，不依赖本地钩子。
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: pnpm
+          cache-dependency-path: campus-overflow-student/frontend/pnpm-lock.yaml
       - name: 安装依赖
         working-directory: campus-overflow-student/frontend
-        run: npm install --no-audit --no-fund
+        env:
+          HUSKY: 0
+        run: pnpm install --frozen-lockfile
+      # 门禁 1：代码规范（含 @typescript-eslint/no-explicit-any，any 逃逸在此拦下）
+      - name: 代码规范检查（ESLint）
+        working-directory: campus-overflow-student/frontend
+        run: pnpm lint
+      # 门禁 2：格式一致性（Prettier，EditorConfig 约束缩进与换行）
+      - name: 格式检查（Prettier）
+        working-directory: campus-overflow-student/frontend
+        run: pnpm format:check
+      # 门禁 3：类型检查（tsc --noEmit，strict + noUncheckedIndexedAccess）
       - name: 类型检查
         working-directory: campus-overflow-student/frontend
-        run: npm run typecheck
+        run: pnpm typecheck
       - name: 构建
         working-directory: campus-overflow-student/frontend
-        run: npm run build
+        run: pnpm build
 
   images:
     name: 容器镜像构建
