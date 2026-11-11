@@ -16,7 +16,7 @@
 | 周期 | 第 7–10 周（Lab 4 在第 7 周，Lab 5 在第 9 周） |
 | 承载故事 | US-007 发布问题（后端实现闭环）、US-009 回答问题、US-012 采纳回答、US-004 浏览课程问答（读路径） |
 | 估算 Velocity | 约 30 SP ＝ 承接故事 18 SP（US-007 5 + US-009 5 + US-012 3 + US-004 5）＋ 工程与文档任务 12 SP（以 Sprint 1 的 27 SP 为基线，本 Sprint 引入大量工程与文档任务） |
-| 任务数 | 17 项（T-027 ~ T-043，接续 Sprint 1 的 T-001~T-026 编号） |
+| 任务数 | 22 项（T-027 ~ T-048，接续 Sprint 1 的 T-001~T-026 编号；其中 T-044~T-048 为 Lab 5 前端任务，见 2.4） |
 | 状态口径 | `Done` 已合并入 main；`Done(待验证)` 代码在库但未端到端验证；`To Do` 未开始；`待决` 等 PO 决策 |
 | 前置依赖 | **Lab 3 四项提交物须先合并并取得教师认可**（PDF 将「Lab 3 产出物已提交并通过教师评审」列为 Lab 4 前置）。当前 Lab 3 定稿在 `feature/lab3-ddd-modeling`，**尚未合并入 main**；main 上的 `docs/ddd/` 仍是初版（4 个聚合、不变式未编号）。T-039 的不变式核查依赖该分支，须先合并（行动项 A-14） |
 
@@ -58,6 +58,18 @@
 | T-042 | Lab 4 提交物对照与验收口径 | 过程记录 | PO（唐志烽） | Done | `docs/lab4/提交物与验收口径.md`，可直接用于 Review 逐条打勾与向教师说明 |
 | T-043 | 判定投票 / 评论 / 标签是否补故事与 Gherkin（D4） | 需求追溯 | PO（唐志烽） | 待决 | 见 D4：建议本轮只登记缺口、Sprint 3 统一补 ID，不新造故事 |
 
+### 2.4 前端工程骨架与对接（Lab 5 Step 1–4，编号接续 T-043）
+
+| 编号 | 任务 | 关联 | 责任人 | 状态 | 验收标准 |
+| --- | --- | --- | --- | --- | --- |
+| T-044 | 前端依赖与目录补齐：`@tanstack/react-query`、`zustand`、`axios`、UI 库（antd 5 或 Tailwind + 自研） | Lab5 Step1 | 江思达 / 何欣怡 | To Do | `package.json` 出现四项依赖；`main.tsx` 挂载 `QueryClientProvider`；`features/`、`shared/` 目录按模块落地 |
+| T-045 | API 客户端生成与封装：`openapi.yaml` → openapi-typescript-codegen；axios 拦截器（Token 注入、统一错误、全局 Loading） | Lab5 Step3 | 江思达 | To Do | 生成目录入库并被 `api.ts` 复用；401 统一跳登录；错误提示集中处理 |
+| T-046 | 列表页与详情页接 TanStack Query + 全局 ErrorBoundary | Lab5 Step3/4 | 何欣怡 | To Do | 列表与详情均用 `useQuery`，缓存键规范；`ErrorBoundary` 兜底未捕获异常 |
+| T-047 | 前端代码质量基础设施：ESLint（TS + react-hooks）、Prettier、EditorConfig、Husky pre-commit、`@/` 别名、TS 严格模式 | Lab5 Step2 | **SM（Flagg32）** | Done | `pnpm lint` / `pnpm typecheck` 双绿；`any` 提交被 pre-commit 拦截；别名在 vite 与 tsconfig 双向一致（证据：`docs/lab5/evidence/`） |
+| T-048 | CI 增加前端门禁 + 提交物验收与端到端录屏归档 | Lab5 提交物 1–4 | **SM（Flagg32）** | In Progress | CI `frontend` job 跑 lint/format:check/typecheck/build；提交物①②③ 已取证，④ 待 T-044~T-046 完成后由 SM 录制归档（≤30 秒） |
+
+> 补充：T-047 / T-048 由 SM 承担的依据见 `docs/lab5/SM交付说明与验收口径.md` 第一节（PDF 未按角色分工，团队沿用 1 PO / 1 SM / 3–4 Dev 的惯例）。Lab 5 的偏差口径（未使用 lint-staged、路由命名、CI 加 lint）同文档第 2.1 节。
+
 ---
 
 ## 三、进入 Sprint 2 时的存量（已完成，不再重复投入）
@@ -84,7 +96,7 @@
 | `TODO(S3)` 共 134 个（co-discovery 64 + co-reputation 70） | 搜索投影、通知中心、声誉结算与徽章、悬赏状态机 | Sprint 3 |
 | 集成测试 `CampusOverflowFlowIT` 转绿 | 它断言了搜索命中、通知送达、采纳后声誉 +15，全部依赖 S3 能力，本 Sprint 无法转绿 | Sprint 3（按 D1 先禁用） |
 | 投票 / 评论 / 标签的验收 | 代码已随 co-qa 落地，但产品 Backlog 与 Gherkin 中无对应故事 | 见 D4，Sprint 3 补 |
-| 前端工程与前后端贯通 | React 18 + TS + Vite 骨架、路由、API 客户端 | Sprint 2 后半段（Lab 5）细化，本表暂不展开 |
+| 前端工程与前后端贯通 | React 18 + TS + Vite 骨架、路由、API 客户端 | 已展开为 Lab 5 任务 T-044~T-048（见 2.4） |
 | 课程管理、加精、教师管理视角 | Product Backlog 后续候选 | Sprint 3+ |
 
 ---
@@ -109,4 +121,4 @@
 
 ---
 
-**维护人**：PO（唐志烽）　|　**最后更新**：2026-11-04　|　**分发范围**：全体团队成员、课程指导教师
+**维护人**：PO（唐志烽）　|　**最后更新**：2026-11-11（SM 补记 Lab 5 任务 T-044~T-048）　|　**分发范围**：全体团队成员、课程指导教师

@@ -1,2 +1,31 @@
-# husky 自动生成的内部目录
+# Node 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+dist-ssr/
+*.local
+
+# 测试覆盖率
+coverage/
+
+# husky 自动生成的内部目录（v9 生成 .husky/_，不需要入库）
 .husky/_
+
+# TypeScript 增量编译缓存（tsc -b 产生）
+*.tsbuildinfo
+
+# 编辑器与系统文件
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
