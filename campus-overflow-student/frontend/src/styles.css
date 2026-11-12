@@ -343,3 +343,32 @@ article h1 {
 .error {
   color: var(--danger);
 }
+
+/* 应用级错误边界兜底界面 */
+.error-boundary {
+  max-width: 520px;
+  margin: 80px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+}
+.error-boundary p {
+  max-width: 420px;
+  word-break: break-word;
+}
+
+/* 全局 Loading 指示条 */
+.global-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  padding: 6px 0;
+  text-align: center;
+  background: var(--brand);
+  color: #fff;
+  font-size: 13px;
+}

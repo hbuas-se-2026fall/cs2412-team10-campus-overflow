@@ -3,3 +3,5 @@ node_modules/
 coverage/
 pnpm-lock.yaml
 package-lock.json
+# OpenAPI 代码生成产物，由 openapi-typescript 负责格式
+src/api/generated/
