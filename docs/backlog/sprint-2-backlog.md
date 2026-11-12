@@ -3,7 +3,7 @@
 > 所属实验：Lab 4 后端工程骨架与领域代码（第 7 周）｜ 交织 Lab 5 前端骨架（第 9 周）
 > 维护人：PO（唐志烽）｜ 看板同步：SM（Flagg32）
 > 版本：v1.0（Lab 4 课前定稿）
-> 上游依据：`docs/backlog/product-backlog.md`、`docs/backlog/sprint-1-backlog.md`、`CampusOverflow实验部分.pdf`（Lab 4 步骤与提交物）、Lab 3 定稿 `docs/ddd/`（13 个聚合 / 42 条不变式，位于分支 `feature/lab3-ddd-modeling`，待合并）
+> 上游依据：`docs/backlog/product-backlog.md`、`docs/backlog/sprint-1-backlog.md`、`CampusOverflow实验部分.pdf`（Lab 4 步骤与提交物）、Lab 3 定稿 `docs/ddd/`（13 个聚合 / 42 条不变式，已随 PR #7 合并入 main）
 
 ---
 
@@ -18,7 +18,7 @@
 | 估算 Velocity | 约 30 SP ＝ 承接故事 18 SP（US-007 5 + US-009 5 + US-012 3 + US-004 5）＋ 工程与文档任务 12 SP（以 Sprint 1 的 27 SP 为基线，本 Sprint 引入大量工程与文档任务） |
 | 任务数 | 22 项（T-027 ~ T-048，接续 Sprint 1 的 T-001~T-026 编号；其中 T-044~T-048 为 Lab 5 前端任务，见 2.4） |
 | 状态口径 | `Done` 已合并入 main；`Done(待验证)` 代码在库但未端到端验证；`To Do` 未开始；`待决` 等 PO 决策 |
-| 前置依赖 | **Lab 3 四项提交物须先合并并取得教师认可**（PDF 将「Lab 3 产出物已提交并通过教师评审」列为 Lab 4 前置）。当前 Lab 3 定稿在 `feature/lab3-ddd-modeling`，**尚未合并入 main**；main 上的 `docs/ddd/` 仍是初版（4 个聚合、不变式未编号）。T-039 的不变式核查依赖该分支，须先合并（行动项 A-14） |
+| 前置依赖 | **Lab 3 四项提交物须先合并并取得教师认可**（PDF 将「Lab 3 产出物已提交并通过教师评审」列为 Lab 4 前置）。Lab 3 定稿已随 PR #7 合并入 main（合并提交 672bbd8），main 上 `docs/ddd/` 为定稿版（13 个聚合 / 42 条编号不变式），T-039 的不变式核查已基于该定稿完成，行动项 A-14 已闭环 |
 
 > **Sprint 2 与 Sprint 1 的关系**：Sprint 1 承诺的 8 个故事在 Sprint 1 内只完成了需求侧交付（故事地图、26 条任务卡、8 份 Gherkin）。截至 Sprint 2 启动，`sprint-1-backlog.md` 中 26 条任务**全部仍为 To Do**、未随实际开发更新。因此 Sprint 2 实际承接了 Sprint 1 的后端实现工作，本表不重复登记 Sprint 1 的任务编号，改为按「实验步骤 + 提交物」重新切分，Sprint 1 的任务卡由 SM 在本 Sprint 内按实际结果补记账（见行动项 A-09）。
 
@@ -36,7 +36,7 @@
 | T-030 | Repository 接口定义在 domain，实现在 infrastructure | Lab4 Step2 | 江思达 | Done | domain 模块不出现 Spring / JPA import（`ArchitectureTest` FF-3 校验） |
 | T-031 | 校验 Flyway 五个上下文的迁移脚本可在空库完整执行（`question` / `answer` / `user` 等表） | Lab4 Step3 | 何欣怡 | To Do | 空库启动后 `flyway_schema_history` 五条 version 全 SUCCESS；表结构与聚合字段一致 |
 | T-032 | 全局异常处理 `@RestControllerAdvice` 统一错误响应 | Lab4 Step3 | 江思达 | Done | 参数校验失败 / 未登录 / 无权限 / 领域异常均返回统一错误体与正确状态码 |
-| T-033 | Logback JSON 结构化日志 | Lab4 Step3 | 柯博 | To Do | 控制台与文件输出为 JSON；含 traceId、时间、级别、logger；`application.yml` 可切换 |
+| T-033 | Logback JSON 结构化日志 | Lab4 Step3 | 柯博 | Done | 控制台与文件输出为 JSON；含 traceId、时间、级别、logger；`application.yml` 可切换。证据：`docs/lab4/JSON日志验证记录.md`，日志用例 `TraceIdFilterTest` |
 | T-034 | `POST /api/v1/questions` 端到端贯通并校验落库 | Lab4 Step4 | 何欣怡 | To Do | Postman 返回 201；`select * from question` 可见对应记录；标签关联表同步写入 |
 
 ### 2.2 提交物与验收证据（Lab 4 提交物 1–4）
@@ -47,7 +47,7 @@
 | T-036 | ADR-009 包结构与四层分层决策 | 提交物③（对应 PDF 的 ADR-002-package-structure） | 江思达 | To Do | 含背景 / 决策 / 后果 / 被否决方案（按上下文分包 vs 按技术分层）；说明 domain 不依赖框架的理由 |
 | T-037 | 修复 4 个乱码 ADR 文件名，补齐 003/005/006 缺失文件或从 README 摘除 | 评分·文档 20% | SM（Flagg32） | Done | `campus-overflow-student/docs/adr/README.md` 中 8 条链接全部可点，无 404 |
 | T-038 | 集成测试 `CampusOverflowFlowIT` 处置（D1 决策落地） | 提交物① | SM（Flagg32） | Done | 按 D1 执行 `@Disabled` 并写明恢复条件；README 记录构建口径 |
-| T-039 | 不变式覆盖核查：Lab 3 定稿的 42 条不变式（`feature/lab3-ddd-modeling` 分支，待合并）× 现有 55 个测试 | 评分·不变式 25% | 柯博 | To Do | 产出一张「不变式 → 测试方法」对照表，标出未覆盖项并说明取舍 |
+| T-039 | 不变式覆盖核查：main 上定稿的 42 条不变式 × 现有 91 个单测 | 评分·不变式 25% | 柯博 | Done | 产出 `docs/lab4/不变式-测试覆盖对照表.md`，42 条逐一对应测试方法，无未覆盖项；实测 18 个测试类 / 91 个用例 0 失败 |
 | T-040 | 《Lab 4 代码走查》文档，支撑全员答辩 | 评分·结构 30% | 江思达 | To Do | 按「请求进入 → 应用服务 → 聚合 → 仓储 → 返回」讲清一条链路，配模块依赖图 |
 
 ### 2.3 过程与决策（PO 职责）
