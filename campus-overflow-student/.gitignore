@@ -1,9 +1,14 @@
 target/
 node_modules/
 dist/
+# TypeScript 增量编译缓存（tsc -b 生成，不应入库）
+*.tsbuildinfo
 *.log
 .idea/
 .vscode/
 *.iml
 .DS_Store
 .env
+
+# Lab 4 T-033: JSON 日志运行目录（logback-spring.xml 默认写入 logs/）
+logs/

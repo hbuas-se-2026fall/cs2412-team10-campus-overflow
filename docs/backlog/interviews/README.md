@@ -1,14 +1,3 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: 31e7cf1207b8d082b268a2ac107cd18b_377fd4b7d26a11f196c5525400248c00
-    ReservedCode1: QKYmydtsppIqtEVqic2ETRPOVT41tmgB6OWcNk1SISrWsseiIio7W+ZxmnYOV2JBfOLyAyfW72S9ii2cegnYVJsAZrT5FiDVSqHWqLhKwQCQ12qJrMwyrTsBcUqZk2YU/ESu/7WATbI+8z7PF65bejC2PJQu4C8tyK6qvG4ii7i10DEf+aUuFafAm8s=
-    ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: 31e7cf1207b8d082b268a2ac107cd18b_377fd4b7d26a11f196c5525400248c00
-    ReservedCode2: QKYmydtsppIqtEVqic2ETRPOVT41tmgB6OWcNk1SISrWsseiIio7W+ZxmnYOV2JBfOLyAyfW72S9ii2cegnYVJsAZrT5FiDVSqHWqLhKwQCQ12qJrMwyrTsBcUqZk2YU/ESu/7WATbI+8z7PF65bejC2PJQu4C8tyK6qvG4ii7i10DEf+aUuFafAm8s=
----
-
 # 用户访谈记录索引（Lab 2 前置）
 
 > 所属实验：Lab 2 需求建模工作坊
@@ -74,4 +63,3 @@ AIGC:
 ---
 
 **维护人**：Flagg32（SM）　|　**关联文档**：[user-story-map.md](../user-story-map.md)、[product-backlog.md](../product-backlog.md)
-*（内容由AI生成，仅供参考）*

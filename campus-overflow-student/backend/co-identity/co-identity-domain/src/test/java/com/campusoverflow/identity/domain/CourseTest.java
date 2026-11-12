@@ -28,6 +28,28 @@ class CourseTest {
     }
 
     @Test
+    void courseCodeMustBeTwoToTwentyLettersDigitsOrHyphens() {
+        Actor teacher = new Actor(5, "王老师", Role.TEACHER);
+        assertThatThrownBy(() -> Course.create(teacher, "D", "数据结构", "2026-秋", NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("课程代码");
+        assertThatThrownBy(() -> Course.create(teacher, "数据结构101", "数据结构", "2026-秋", NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("课程代码");
+        assertThat(Course.create(teacher, "ds-101", "数据结构", "2026-秋", NOW).code()).isEqualTo("DS-101");
+    }
+
+    @Test
+    void courseNameAndTermMustBeWithinBounds() {
+        Actor teacher = new Actor(5, "王老师", Role.TEACHER);
+        assertThatThrownBy(() -> Course.create(teacher, "DS-101", "数", "2026-秋", NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("课程名称");
+        assertThatThrownBy(() -> Course.create(teacher, "DS-101", "字".repeat(51), "2026-秋", NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("课程名称");
+        assertThatThrownBy(() -> Course.create(teacher, "DS-101", "数据结构", "秋", NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("学期");
+        assertThat(Course.create(teacher, "DS-101", "数据结构", "2026-秋", NOW).term()).isEqualTo("2026-秋");
+    }
+
+    @Test
     void courseTeacherRoleCannotBeDowngraded() {
         CourseMember m = CourseMember.teacher(1, 5, NOW);
         assertThatThrownBy(() -> m.changeRole(CourseRole.STUDENT)).isInstanceOf(BusinessRuleException.class);

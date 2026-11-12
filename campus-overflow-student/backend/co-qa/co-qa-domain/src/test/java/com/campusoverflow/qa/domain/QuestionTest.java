@@ -2,6 +2,7 @@ package com.campusoverflow.qa.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import com.campusoverflow.shared.domain.BusinessRuleException;
 import com.campusoverflow.shared.domain.ConflictException;
@@ -40,6 +41,22 @@ class QuestionTest {
         void titleMustBeBetween10And150Chars() {
             assertThatThrownBy(() -> new Title("太短了")).isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("标题");
+        }
+
+        @Test
+        void titleMustRejectOverlongInput() {
+            assertThatThrownBy(() -> new Title("字".repeat(151))).isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("标题");
+            assertThat(new Title("字".repeat(150)).value()).hasSize(150);
+        }
+
+        @Test
+        void questionBodyMustBeBetween10And2000Chars() {
+            assertThatThrownBy(() -> MarkdownBody.ofQuestion("太短了"))
+                    .isInstanceOf(BusinessRuleException.class).hasMessageContaining("问题正文");
+            assertThatThrownBy(() -> MarkdownBody.ofQuestion("字".repeat(2001)))
+                    .isInstanceOf(BusinessRuleException.class).hasMessageContaining("问题正文");
+            assertThat(MarkdownBody.ofQuestion("字".repeat(2000)).value()).hasSize(2000);
         }
 
         @Test
@@ -137,6 +154,20 @@ class QuestionTest {
             q.softDelete(ASKER, false, NOW);
             assertThatThrownBy(() -> Answer.submit(q, OTHER.userId(), MarkdownBody.ofAnswer("这是一个迟到了很久的回答内容"), NOW))
                     .isInstanceOf(BusinessRuleException.class);
+        }
+
+        @Test
+        void deletedQuestionCannotBeAcceptedOrEdited() {
+            Question q = persistedQuestion();
+            Answer a = persistedAnswer(q, OTHER.userId(), 50);
+            q.softDelete(ASKER, false, NOW);
+
+            assertThat(catchThrowableOfType(() -> q.accept(a, ASKER, false), BusinessRuleException.class).code())
+                    .isEqualTo("QA-1009");
+            assertThat(catchThrowableOfType(() -> q.edit(ASKER, false, q.title(), q.body(), q.tags(), NOW),
+                    BusinessRuleException.class).code()).isEqualTo("QA-1009");
+            assertThat(q.acceptedAnswerId()).isNull();
+            assertThat(q.isDeleted()).isTrue();
         }
     }
 }

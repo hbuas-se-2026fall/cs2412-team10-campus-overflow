@@ -27,6 +27,16 @@ class VoteAndCommentTest {
     }
 
     @Test
+    void commentBodyMustBeBetweenOneAndOneThousandChars() {
+        assertThatThrownBy(() -> Comment.post(TargetType.ANSWER, 50, 10, 1, null, "", NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("评论内容");
+        assertThatThrownBy(() -> Comment.post(TargetType.ANSWER, 50, 10, 1, null, "字".repeat(1001), NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("评论内容");
+        assertThat(Comment.post(TargetType.ANSWER, 50, 10, 1, null, "赞", NOW).body()).isEqualTo("赞");
+        assertThat(Comment.post(TargetType.ANSWER, 50, 10, 1, null, "字".repeat(1000), NOW).body()).hasSize(1000);
+    }
+
+    @Test
     void repliesAreLimitedToOneLevelOnSameTarget() {
         Comment top = Comment.post(TargetType.ANSWER, 50, 10, 1, null, "请问第二步为什么要变色？", NOW);
         top.assignId(1);
