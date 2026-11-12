@@ -1,0 +1,4 @@
+# 前端目录统一使用 LF：仓库 core.autocrlf=true 会把检出内容转成 CRLF，
+# 而 Prettier 默认 endOfLine=lf，两者冲突会让 pnpm format:check 在 Windows 上误报。
+# 只约束前端目录，不影响后端 Java 文件的既有行为。
+* text=auto eol=lf
