@@ -1,0 +1,688 @@
+# CampusOverflow 后端 API 契约（OpenAPI 3.0.3）
+# 来源：后端 springdoc `/v3/api-docs`（co-identity / co-qa / co-discovery / co-reputation 四个上下文）
+# 用途：前端 `pnpm gen:api` 据此生成 TS 类型（src/api/generated/schema.ts）；
+#       后端改动字段后重跑 gen:api，类型不一致处在编译期自动报错。
+openapi: 3.0.3
+info:
+  title: CampusOverflow API
+  version: 1.0.0
+  description: 校园课程问答平台对外 HTTP 契约。
+servers:
+  - url: /api
+    description: 开发期由 Vite 代理到后端 http://localhost:8080
+
+paths:
+  /v1/auth/csrf:
+    get:
+      tags: [Auth]
+      summary: 获取 CSRF Token
+      responses:
+        '200':
+          description: CSRF 令牌（同时写入 XSRF-TOKEN Cookie）
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CsrfResponse' }
+
+  /v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: 校园身份注册
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdResponse' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: 登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: 当前登录用户
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: 退出登录
+      responses:
+        '204': { description: 已退出 }
+
+  /v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: 当前登录用户
+      responses:
+        '200':
+          description: 当前用户
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/questions:
+    get:
+      tags: [Questions]
+      summary: 课程问题分页列表
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: courseId, in: query, schema: { type: integer } }
+      responses:
+        '200':
+          description: 分页问题摘要
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuestionSummaryPage' }
+    post:
+      tags: [Questions]
+      summary: 发布问题
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AskQuestionRequest' }
+      responses:
+        '201':
+          description: 新问题 id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/questions/{questionId}:
+    parameters:
+      - { name: questionId, in: path, required: true, schema: { type: integer } }
+    get:
+      tags: [Questions]
+      summary: 问题详情
+      responses:
+        '200':
+          description: 问题详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuestionDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Questions]
+      summary: 编辑问题
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AskQuestionRequest' }
+      responses:
+        '200': { description: 已更新 }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Questions]
+      summary: 删除问题
+      responses:
+        '204': { description: 已删除 }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /v1/questions/{questionId}/answers:
+    post:
+      tags: [Answers]
+      summary: 提交回答
+      parameters:
+        - { name: questionId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnswerRequest' }
+      responses:
+        '201':
+          description: 新回答 id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdResponse' }
+
+  /v1/answers/{answerId}:
+    parameters:
+      - { name: answerId, in: path, required: true, schema: { type: integer } }
+    put:
+      tags: [Answers]
+      summary: 编辑回答
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnswerRequest' }
+      responses:
+        '200': { description: 已更新 }
+    delete:
+      tags: [Answers]
+      summary: 删除回答
+      responses:
+        '204': { description: 已删除 }
+
+  /v1/questions/{questionId}/accepted-answer:
+    put:
+      tags: [Answers]
+      summary: 采纳回答
+      parameters:
+        - { name: questionId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AcceptRequest' }
+      responses:
+        '200': { description: 已采纳 }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /v1/answers/{answerId}/endorsement:
+    post:
+      tags: [Answers]
+      summary: 教师认证回答
+      parameters:
+        - { name: answerId, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 已认证 }
+
+  /v1/votes:
+    put:
+      tags: [Votes]
+      summary: 投票 / 改投 / 撤销
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VoteRequest' }
+      responses:
+        '200':
+          description: 投票结果
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VoteResult' }
+
+  /v1/comments:
+    post:
+      tags: [Comments]
+      summary: 发表评论
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CommentRequest' }
+      responses:
+        '201':
+          description: 新评论 id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdResponse' }
+
+  /v1/search/questions:
+    get:
+      tags: [Discovery]
+      summary: 全文检索问题
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string } }
+        - { name: tag, in: query, schema: { type: string } }
+        - { name: sort, in: query, schema: { type: string } }
+        - { name: unanswered, in: query, schema: { type: boolean } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        '200':
+          description: 检索结果分页
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResultPage' }
+
+  /v1/questions/{questionId}/related:
+    get:
+      tags: [Discovery]
+      summary: 相关推荐问题
+      parameters:
+        - { name: questionId, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: 相关问题列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RelatedQuestion' }
+
+  /v1/tags/popular:
+    get:
+      tags: [Questions]
+      summary: 热门标签
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, default: 15 } }
+      responses:
+        '200':
+          description: 标签及使用次数
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TagCount' }
+
+  /v1/leaderboard:
+    get:
+      tags: [Reputation]
+      summary: 声誉排行榜
+      parameters:
+        - {
+            name: period,
+            in: query,
+            required: true,
+            schema: { type: string, enum: [daily, weekly, term] },
+          }
+      responses:
+        '200':
+          description: 排行榜条目
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/LeaderboardEntry' }
+
+  /v1/users/{userId}/reputation:
+    get:
+      tags: [Reputation]
+      summary: 个人声誉摘要
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: 声誉档案
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReputationProfile' }
+
+  /v1/questions/{questionId}/bounty:
+    post:
+      tags: [Reputation]
+      summary: 发起悬赏
+      parameters:
+        - { name: questionId, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BountyRequest' }
+      responses:
+        '201':
+          description: 新悬赏 id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdResponse' }
+
+  /v1/notifications:
+    get:
+      tags: [Discovery]
+      summary: 通知分页列表
+      responses:
+        '200':
+          description: 通知分页
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPage' }
+
+  /v1/notifications/unread-count:
+    get:
+      tags: [Discovery]
+      summary: 未读通知计数
+      responses:
+        '200':
+          description: 未读数量
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UnreadCount' }
+
+  /v1/notifications/read-all:
+    post:
+      tags: [Discovery]
+      summary: 全部标记已读
+      responses:
+        '200':
+          description: 更新结果
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReadAllResult' }
+
+components:
+  responses:
+    BadRequest:
+      description: 参数校验失败
+      content: { application/json: { schema: { $ref: '#/components/schemas/ProblemDetail' } } }
+    Unauthorized:
+      description: 未登录或会话失效
+      content: { application/json: { schema: { $ref: '#/components/schemas/ProblemDetail' } } }
+    Forbidden:
+      description: 无权限
+      content: { application/json: { schema: { $ref: '#/components/schemas/ProblemDetail' } } }
+    NotFound:
+      description: 资源不存在
+      content: { application/json: { schema: { $ref: '#/components/schemas/ProblemDetail' } } }
+    Conflict:
+      description: 状态冲突或重复操作
+      content: { application/json: { schema: { $ref: '#/components/schemas/ProblemDetail' } } }
+
+  schemas:
+    ProblemDetail:
+      type: object
+      properties:
+        code: { type: string, description: 业务错误码 }
+        detail: { type: string, description: 错误说明 }
+        status: { type: integer, description: HTTP 状态码 }
+
+    CsrfResponse:
+      type: object
+      properties:
+        token: { type: string }
+
+    IdResponse:
+      type: object
+      properties:
+        id: { type: integer }
+
+    Author:
+      type: object
+      required: [id, displayName, role, verified]
+      properties:
+        id: { type: integer }
+        displayName: { type: string }
+        role: { type: string, enum: [STUDENT, TA, TEACHER, ADMIN] }
+        verified: { type: boolean }
+
+    PageMeta:
+      type: object
+      required: [items, total, page, size]
+      properties:
+        total: { type: integer }
+        page: { type: integer }
+        size: { type: integer }
+
+    CourseRef:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        term: { type: string }
+        teacherName: { type: string }
+
+    Me:
+      type: object
+      required: [id, username, displayName, email, role, verified, courses]
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        displayName: { type: string }
+        email: { type: string }
+        role: { $ref: '#/components/schemas/Author/properties/role' }
+        verified: { type: boolean }
+        college: { type: string }
+        className: { type: string }
+        courses:
+          type: array
+          items: { $ref: '#/components/schemas/CourseRef' }
+
+    QuestionSummary:
+      type: object
+      required:
+        [id, title, excerpt, tags, author, score, answerCount, viewCount, accepted, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        excerpt: { type: string }
+        tags: { type: array, items: { type: string } }
+        courseId: { type: integer }
+        author: { $ref: '#/components/schemas/Author' }
+        score: { type: integer }
+        answerCount: { type: integer }
+        viewCount: { type: integer }
+        accepted: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    QuestionSummaryPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/QuestionSummary' } }
+
+    Comment:
+      type: object
+      required: [id, author, body, createdAt]
+      properties:
+        id: { type: integer }
+        author: { $ref: '#/components/schemas/Author' }
+        parentId: { type: integer, nullable: true }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Answer:
+      type: object
+      required: [id, body, bodyHtml, author, score, accepted, myVote, canEdit, createdAt, comments]
+      properties:
+        id: { type: integer }
+        body: { type: string }
+        bodyHtml: { type: string }
+        author: { $ref: '#/components/schemas/Author' }
+        score: { type: integer }
+        accepted: { type: boolean }
+        endorsedBy: { $ref: '#/components/schemas/Author' }
+        myVote: { type: integer, description: -1 / 0 / 1 }
+        canEdit: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        comments: { type: array, items: { $ref: '#/components/schemas/Comment' } }
+
+    QuestionDetail:
+      type: object
+      required:
+        [
+          id,
+          title,
+          body,
+          bodyHtml,
+          tags,
+          author,
+          score,
+          answerCount,
+          viewCount,
+          myVote,
+          createdAt,
+          permissions,
+          comments,
+          answers,
+        ]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        body: { type: string }
+        bodyHtml: { type: string }
+        tags: { type: array, items: { type: string } }
+        course: { $ref: '#/components/schemas/CourseRef' }
+        author: { $ref: '#/components/schemas/Author' }
+        score: { type: integer }
+        answerCount: { type: integer }
+        viewCount: { type: integer }
+        acceptedAnswerId: { type: integer, nullable: true }
+        myVote: { type: integer }
+        createdAt: { type: string, format: date-time }
+        permissions:
+          type: object
+          properties:
+            canEdit: { type: boolean }
+            canDelete: { type: boolean }
+            canAccept: { type: boolean }
+            canManage: { type: boolean }
+        comments: { type: array, items: { $ref: '#/components/schemas/Comment' } }
+        answers: { type: array, items: { $ref: '#/components/schemas/Answer' } }
+
+    SearchResult:
+      allOf:
+        - $ref: '#/components/schemas/QuestionSummary'
+        - type: object
+          required: [bountyOpen]
+          properties:
+            bountyOpen: { type: boolean }
+
+    SearchResultPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/SearchResult' } }
+
+    RelatedQuestion:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        answerCount: { type: integer }
+        accepted: { type: boolean }
+
+    TagCount:
+      type: object
+      properties:
+        name: { type: string }
+        questionCount: { type: integer }
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank: { type: integer }
+        userId: { type: integer }
+        displayName: { type: string }
+        verified: { type: boolean }
+        score: { type: integer }
+
+    Notification:
+      type: object
+      properties:
+        id: { type: integer }
+        type: { type: string }
+        title: { type: string }
+        link: { type: string }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    NotificationPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+
+    UnreadCount:
+      type: object
+      properties:
+        count: { type: integer }
+
+    ReadAllResult:
+      type: object
+      properties:
+        updated: { type: integer }
+
+    Badge:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+        awardedAt: { type: string, format: date-time }
+
+    ReputationProfile:
+      type: object
+      properties:
+        userId: { type: integer }
+        displayName: { type: string }
+        reputation: { type: integer }
+        availablePoints: { type: integer }
+        frozenPoints: { type: integer }
+        badges: { type: array, items: { $ref: '#/components/schemas/Badge' } }
+
+    RegisterRequest:
+      type: object
+      required: [username, password, displayName]
+      properties:
+        username: { type: string }
+        password: { type: string }
+        displayName: { type: string }
+        email: { type: string }
+        college: { type: string }
+        className: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    AskQuestionRequest:
+      type: object
+      required: [title, body, tags]
+      properties:
+        courseId: { type: integer }
+        title: { type: string }
+        body: { type: string }
+        tags: { type: array, items: { type: string } }
+
+    AnswerRequest:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string }
+
+    AcceptRequest:
+      type: object
+      required: [answerId]
+      properties:
+        answerId: { type: integer }
+
+    VoteRequest:
+      type: object
+      required: [targetType, targetId, value]
+      properties:
+        targetType: { type: string, enum: [QUESTION, ANSWER] }
+        targetId: { type: integer }
+        value: { type: integer, enum: [-1, 0, 1] }
+
+    VoteResult:
+      type: object
+      properties:
+        myVote: { type: integer }
+        scoreDelta: { type: integer }
+
+    CommentRequest:
+      type: object
+      required: [targetType, targetId, body]
+      properties:
+        targetType: { type: string, enum: [QUESTION, ANSWER] }
+        targetId: { type: integer }
+        body: { type: string }
+        parentId: { type: integer, nullable: true }
+
+    BountyRequest:
+      type: object
+      required: [points, days]
+      properties:
+        points: { type: integer }
+        days: { type: integer }
