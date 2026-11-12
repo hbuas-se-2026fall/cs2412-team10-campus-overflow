@@ -66,7 +66,7 @@
 | T-045 | API 客户端生成与封装：`openapi.yaml` → openapi-typescript-codegen；axios 拦截器（Token 注入、统一错误、全局 Loading） | Lab5 Step3 | 江思达 | To Do | 生成目录入库并被 `api.ts` 复用；401 统一跳登录；错误提示集中处理 |
 | T-046 | 列表页与详情页接 TanStack Query + 全局 ErrorBoundary | Lab5 Step3/4 | 何欣怡 | To Do | 列表与详情均用 `useQuery`，缓存键规范；`ErrorBoundary` 兜底未捕获异常 |
 | T-047 | 前端代码质量基础设施：ESLint（TS + react-hooks）、Prettier、EditorConfig、Husky pre-commit、`@/` 别名、TS 严格模式 | Lab5 Step2 | **SM（Flagg32）** | Done | `pnpm lint` / `pnpm typecheck` 双绿；`any` 提交被 pre-commit 拦截；别名在 vite 与 tsconfig 双向一致（证据：`docs/lab5/evidence/`） |
-| T-048 | CI 增加前端门禁 + 提交物验收与端到端录屏归档 | Lab5 提交物 1–4 | **SM（Flagg32）** | In Progress | CI `frontend` job 跑 lint/format:check/typecheck/build；提交物①②③ 已取证，④ 待 T-044~T-046 完成后由 SM 录制归档（≤30 秒） |
+| T-048 | CI 增加前端门禁 + 提交物验收与端到端录屏归档 | Lab5 提交物 1–4 | **SM（Flagg32）** | In Progress | CI `frontend` job 跑 lint/format:check/typecheck/build；提交物①②③ 已取证（`docs/lab5/evidence/`）；④ 端到端录屏受阻于 T-046 页面改造未合入及本地 MySQL/Redis 环境，录制规范与阻塞说明见 `docs/lab5/evidence/README.md`（≤30 秒，归档为 `e2e-*.mp4`） |
 
 > 补充：T-047 / T-048 由 SM 承担的依据见 `docs/lab5/SM交付说明与验收口径.md` 第一节（PDF 未按角色分工，团队沿用 1 PO / 1 SM / 3–4 Dev 的惯例）。Lab 5 的偏差口径（未使用 lint-staged、路由命名、CI 加 lint）同文档第 2.1 节。
 
