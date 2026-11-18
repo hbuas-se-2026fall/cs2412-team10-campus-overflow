@@ -38,8 +38,19 @@ public class SearchController {
                                                @RequestParam(defaultValue = "false") boolean bounty,
                                                @RequestParam(defaultValue = "1") int page,
                                                @RequestParam(defaultValue = "20") int size) {
-        SearchSort s = sort == null || sort.isBlank() ? null : SearchSort.valueOf(sort.toUpperCase(Locale.ROOT));
+        SearchSort s = parseSort(sort);
         return discovery.search(new SearchQuery(q, courseId, tag, s, unanswered, bounty, new PageRequest(page, size)));
+    }
+
+    private static SearchSort parseSort(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return SearchSort.valueOf(raw.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     @Operation(summary = "相关问题（标签 Jaccard 相似度）")
