@@ -9,7 +9,7 @@ CampusOverflow 是面向高校课程的校园问答平台。本仓库用于软�
 | 角色 | 成员 | GitHub |
 | --- | --- | --- |
 | PO（产品负责人） | 唐志烽 | [luck970](https://github.com/luck970) |
-| SM（Scrum Master） | Flagg32 | [Flagg32](https://github.com/Flagg32) |
+| SM（Scrum Master） | 左焱之| [Flagg32](https://github.com/Flagg32) |
 | Developer | 江思达 | [houhai6](https://github.com/houhai6) |
 | Developer | 何欣怡 | [hehe309](https://github.com/hehe309) |
 | Developer | 柯博 | [Ke-1226](https://github.com/Ke-1226) |
