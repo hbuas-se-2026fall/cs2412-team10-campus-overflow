@@ -24,4 +24,10 @@ export const queryKeys = {
     related: (questionId: number) => [...queryKeys.questions.all(), 'related', questionId] as const,
     popularTags: () => [...queryKeys.questions.all(), 'popular-tags'] as const,
   },
+  users: {
+    all: () => ['users'] as const,
+    // reputations 是 reputation 的前缀：需要整体刷新声誉档案时按前缀失效
+    reputations: () => [...queryKeys.users.all(), 'reputation'] as const,
+    reputation: (userId: number) => [...queryKeys.users.reputations(), userId] as const,
+  },
 };
