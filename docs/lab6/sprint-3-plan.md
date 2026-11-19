@@ -44,7 +44,7 @@
 | T-063 | FlowIT 解除 @Disabled 并转绿 | SM（Flagg32） | T-049 ~ T-057 | Blocked | 依赖 T-052 ~ T-058 未完成 |
 | T-064 | ADR-010 关键设计 | SM（Flagg32，编号与审核） | T-050 | Done（审核归档） | `campus-overflow-student/docs/adr/010-搜索索引投影一致性.md` + `adr-010-review.md` |
 | T-065 | 演示录屏（≤5 min）+ `docs/retro/sprint-3.md` + 主持 Retro | SM（Flagg32） | T-063 | Blocked | 依赖 T-063 |
-| T-066 | 补录 Lab 5 端到端录屏（结转） | SM（Flagg32） | 搜索可用 | In Progress | 见 `docs/lab5/evidence/README.md` 第三节 |
+| T-066 | 补录 Lab 5 端到端录屏（结转） | SM（Flagg32） | 搜索可用 | Done | `docs/lab5/evidence/e2e-20261119.mp4`（23.9s）+ 该目录 README 第 3 节录制记录 |
 
 ### 2.1 需要 PO 定稿的两处口径冲突（SM 已识别，不擅自改分工）
 
@@ -80,6 +80,7 @@
 | 2026-11-19 | 复核 PR #23（江思达 T-049~051）代码与 ADR-010 编号口径，提交 SM 评审意见并 LGTM | review `APPROVED`（#pullrequestreview-5967346050） |
 | 2026-11-19 | 合并 PR #23 入 main | `c8404b25`，9 个文件、+558/−33 |
 | 2026-11-19 | 排除 CI 偶发失败：对 run `44215165936` 触发 rerun | 前端 success、后端 success（此前两次 failure 为环境性偶发） |
+| 2026-11-19 | 本机拉起 MySQL(3307)/Redis(6379)/后端(8080)/前端(5173)，补录 Lab 5 端到端录屏并归档 | T-066 完成：`docs/lab5/evidence/e2e-20261119.mp4`（1280×720，23.9s） |
 
 ---
 
@@ -113,4 +114,4 @@
 | T-063 | `mvn verify -Dit.test=CampusOverflowFlowIT` 通过，覆盖「注册→提问→回答→采纳→声誉 +15→搜索命中→收到通知」 | 阻塞：依赖 T-052 ~ T-057，通知与声誉链路尚未实现 | 待 T-052/T-053 与 T-055~T-057 合并后解除 `@Disabled`；当前不放宽判据 |
 | T-064 | 含背景 / 决策 / 后果 / 被否决方案；ADR README 登记可点 | 达成：ADR-010 已合并且 README 索引可点；SM 已出编号与口径审核结论 | 若 PO 要求 SM 独立再写一份，按 Planning 纪要调整 |
 | T-065 | 录屏可回放且无 500；纪要含卡片汇总与 2–3 项可执行改进 | 阻塞：依赖 T-063 与可演示的完整链路 | Retro 纪要与卡片汇总必须来自真实回顾会，不预填 |
-| T-066 | 录屏可回放，三画面齐全（提问 → 列表 → 详情） | 进行中：前置条件（后端 MySQL/Redis、前端 dev）已在本地复算可用 | 录制 ≤30s 三画面并归档至 `docs/lab5/evidence/`，README 的「待归档」改实链 |
+| T-066 | 录屏可回放，三画面齐全（提问 → 列表 → 详情） | 达成（2026-11-19）：`e2e-20261119.mp4` 1280×720 / 23.9s，三画面齐全，URL 徽标可辨认路由；录制人、时间、前后端 commit 均已记录 | 归档至 `docs/lab5/evidence/` 完成，README「待归档」已改实链；后续链路变动需重录 |

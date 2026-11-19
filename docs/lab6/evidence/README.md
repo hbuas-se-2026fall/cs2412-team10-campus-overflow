@@ -29,7 +29,7 @@
 | PR #23 评审记录 | `pull/23#pullrequestreview-5967346050` | SM 对 T-049~051 与 ADR-010 的复核意见，state = APPROVED |
 | PR #23 合并记录 | commit `c8404b25` | T-049 / T-050 / T-051 / T-064 的落地证据 |
 | CI 运行 | run `44215165936` | 前端 success、后端 success；此前两次 failure 为环境性偶发，已 rerun 排除 |
-| Lab 5 证据目录 | `docs/lab5/evidence/` | 提交物④ 端到端录屏为结转任务 T-066，见该目录 README 第三节 |
+| Lab 5 证据目录 | `docs/lab5/evidence/` | 结转任务 T-066 已于 2026-11-19 完成：`e2e-20261119.mp4`（1280×720，23.9s，三画面齐全），录制记录见该目录 README 第 3 节 |
 
 ## 四、归档纪律
 
