@@ -1,38 +1,53 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { useAuth } from '../auth';
+import { queryKeys } from '../queryKeys';
 import type { Page, QuestionSummary, SearchResult } from '../types';
 
 export function QuestionListPage() {
   const { me } = useAuth();
-  const [data, setData] = useState<Page<QuestionSummary | SearchResult> | null>(null);
-  const [tags, setTags] = useState<{ name: string; questionCount: number }[]>([]);
   const [keyword, setKeyword] = useState('');
   const [activeTag, setActiveTag] = useState<string | undefined>();
   const [sort, setSort] = useState('newest');
   const [unanswered, setUnanswered] = useState(false);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    api
-      .popularTags()
-      .then(setTags)
-      .catch(() => undefined);
-  }, []);
+  const filters = {
+    keyword: keyword.trim(),
+    tag: activeTag,
+    sort,
+    unanswered,
+    page: 1,
+  };
+  const searching =
+    filters.keyword !== '' ||
+    filters.tag !== undefined ||
+    filters.unanswered ||
+    filters.sort !== 'newest';
 
-  useEffect(() => {
-    const searching = keyword.trim() !== '' || activeTag || unanswered || sort !== 'newest';
-    const promise = searching
-      ? api.search(keyword.trim(), { tag: activeTag, sort, unanswered })
-      : api.questions(1);
-    promise
-      .then((r) => {
-        setData(r);
-        setError('');
-      })
-      .catch((e) => setError(e.message));
-  }, [keyword, activeTag, sort, unanswered]);
+  // 与提问页共用 questions/list 这个键前缀：发布成功后失效一次，回到列表就能看到新问题
+  const listQuery = useQuery<Page<QuestionSummary | SearchResult>>({
+    queryKey: queryKeys.questions.list(filters),
+    queryFn: () =>
+      searching
+        ? api.search(filters.keyword, {
+            tag: filters.tag,
+            sort: filters.sort,
+            unanswered: filters.unanswered,
+            page: filters.page,
+          })
+        : api.questions(filters.page),
+  });
+
+  const tagsQuery = useQuery({
+    queryKey: queryKeys.questions.popularTags(),
+    queryFn: () => api.popularTags(),
+  });
+
+  const data = listQuery.data;
+  const tags = tagsQuery.data ?? [];
+  const error = listQuery.error?.message ?? '';
 
   return (
     <div className="layout">
@@ -58,7 +73,7 @@ export function QuestionListPage() {
             仅看未回答
           </label>
           {me && (
-            <Link className="primary" to="/ask">
+            <Link className="primary" to="/questions/new">
               我要提问
             </Link>
           )}
@@ -103,6 +118,7 @@ export function QuestionListPage() {
             </li>
           ))}
         </ul>
+        {listQuery.isPending && <p className="muted">加载中…</p>}
         {data && data.items.length === 0 && (
           <p className="muted">没有匹配的问题，换个关键词试试。</p>
         )}
