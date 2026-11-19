@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api';
-import type { LeaderboardEntry } from '../types';
+import { api } from '@/api';
+import type { LeaderboardEntry } from '@/types';
 
 const PERIODS = [
   ['week', '本周'],

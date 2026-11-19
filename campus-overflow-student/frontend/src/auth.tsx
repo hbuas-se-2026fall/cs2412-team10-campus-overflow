@@ -7,8 +7,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { api } from './api';
-import type { Me } from './types';
+import { api } from '@/api';
+import type { Me } from '@/types';
 
 interface AuthState {
   me: Me | null;

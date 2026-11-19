@@ -53,7 +53,7 @@ PDF 的 Lab 5 全节**没有出现「SM」字样，也没有按角色分配任�
 | ① | 前端工程 `pnpm dev` 可启动，首页可访问 | `pnpm dev` 后 `curl http://localhost:5173/` | **通过**：HTTP 200，响应含 `id="root"`，Vite ready in 374 ms | `docs/lab5/evidence/checks-green.png` |
 | ② | `pnpm lint` 与 `pnpm typecheck` 全绿 | 本地实跑两条命令 | **通过**：`lint` exit 0（无 problem），`typecheck` exit 0（无类型错误） | 同上 |
 | ③ | pre-commit 钩子可拦截不合规提交 | 造一个含 `any` 的临时文件并提交 | **通过**：ESLint 报 3 个 error（`no-explicit-any` ×2、`no-console` ×1），钩子 exit 1，提交未生成（HEAD 不变） | `docs/lab5/evidence/precommit-block-any.png` |
-| ④ | 提问 → 列表 → 详情 端到端跑通 + 30 秒内录屏 | 需前端接好后端真实接口 | **未完成**：当前 `src/` 仍用自制 `api.ts`，未接 TanStack Query / axios 拦截器；`/ask` 页面已存在但依赖后端启动 | 见第五节 T-048 |
+| ④ | 提问 → 列表 → 详情 端到端跑通 + 30 秒内录屏 | 需前端接好后端真实接口 | **代码链路已就绪，录屏仍缺**：2026-11-19 补齐 Step 1/3/4 缺口（zustand + Ant Design 5、TanStack Query `useQuery`/`useMutation`、`@/` 别名、AppShell、`/questions/new` 路由），`lint` / `typecheck` / `build` 全绿；仍需 MySQL + Redis + 后端联调后录制 ≤30 秒视频 | 见第五节 T-048 |
 
 > 补充实测：`pnpm build`（`tsc -b && vite build`）exit 0，42 modules，产物 178.38 kB（gzip 58.22 kB），构建 542 ms —— 说明严格模式下无隐式 `any` 导致的编译失败。
 
@@ -92,6 +92,8 @@ rm src/__gate_check.ts && git restore --staged src/__gate_check.ts
 
 ## 五、验收缺口清单（交 Developer，SM 复核）
 
+> **2026-11-19 补齐状态**：下表第 1–5 项已全部补齐并实跑验证——`zustand@5.1.0` 与 `antd@5.29.3` 已安装且 `pnpm-lock.yaml` 同步；11 个源码文件改用 `@/` 别名；列表 / 详情用 `useQuery`、提问与写操作用 `useMutation`；`src/shared/store.ts`（zustand）与 `src/shared/AppShell.tsx`（Header + Sidebar + Outlet）已落地；`format` / `typecheck` / `lint` / `build` 均 exit 0（1550 modules，最大 chunk 441.53 kB）。**第 6 项（端到端录屏）仍缺**，受 MySQL / Redis / Docker 环境阻塞，补齐步骤见 `docs/lab-audit/证据补齐指引.md` 第 8 节。下表保留 2026-11-11 的原始缺口记录供追溯。
+
 | # | 缺口 | PDF 依据 | 归属 | 判定标准 | Backlog |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 未安装/未接入 `@tanstack/react-query`、`zustand`、`axios`、UI 库（antd 或 Tailwind） | Step 1「安装核心依赖」 | Developer（江思达 + 何欣怡） | `package.json` 出现四项依赖，且 `main.tsx` 挂载 `QueryClientProvider` | T-044 |
@@ -123,3 +125,4 @@ rm src/__gate_check.ts && git restore --staged src/__gate_check.ts
 ---
 
 **维护人**：SM（左焱之 / Flagg32）｜**分发范围**：Overflow Crew 全员、课程指导教师
+**补齐复核**：PO（唐志烽 / luck970），2026-11-19（第 1–5 项缺口关闭，第 6 项录屏待环境就绪）

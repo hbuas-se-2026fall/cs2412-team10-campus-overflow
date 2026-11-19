@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../api';
-import type { Notification } from '../types';
+import { api } from '@/api';
+import type { Notification } from '@/types';
 
 export function NotificationsPage() {
   const [items, setItems] = useState<Notification[]>([]);

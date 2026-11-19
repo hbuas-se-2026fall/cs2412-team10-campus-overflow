@@ -1,5 +1,5 @@
-import { request } from './api/http';
-import type { components } from './api/generated/schema';
+import { request } from '@/api/http';
+import type { components } from '@/api/generated/schema';
 import type {
   LeaderboardEntry,
   Me,
@@ -9,9 +9,9 @@ import type {
   QuestionSummary,
   ReputationProfile,
   SearchResult,
-} from './types';
+} from '@/types';
 
-export { ApiError } from './api/http';
+export { ApiError } from '@/api/http';
 
 /** 由 openapi-typescript 生成的契约类型；后端改动字段后重跑 `pnpm gen:api` 会在此反映。 */
 type Schema<K extends keyof components['schemas']> = components['schemas'][K];

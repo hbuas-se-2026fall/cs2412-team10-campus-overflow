@@ -1,41 +1,44 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api } from '../api';
-import { useAuth } from '../auth';
-import type { QuestionDetail } from '../types';
+import { api } from '@/api';
+import { useAuth } from '@/auth';
 
 export function QuestionDetailPage() {
   const { id } = useParams();
   const questionId = Number(id);
   const { me } = useAuth();
-  const [q, setQ] = useState<QuestionDetail | null>(null);
-  const [related, setRelated] = useState<{ id: number; title: string }[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
 
-  const load = useCallback(() => {
-    api
-      .question(questionId)
-      .then(setQ)
-      .catch((e) => setError(e.message));
-  }, [questionId]);
+  const detail = useQuery({
+    queryKey: ['question', questionId],
+    queryFn: () => api.question(questionId),
+    enabled: Number.isFinite(questionId),
+  });
+  const related = useQuery({
+    queryKey: ['related', questionId],
+    queryFn: () => api.related(questionId),
+    enabled: Number.isFinite(questionId),
+  });
 
-  useEffect(() => {
-    load();
-    api
-      .related(questionId)
-      .then(setRelated)
-      .catch(() => undefined);
-  }, [load, questionId]);
+  // 写操作统一走 useMutation，成功后失效并刷新相关查询，避免手工维护 loading 状态。
+  const mutation = useMutation({
+    mutationFn: (fn: () => Promise<unknown>) => fn(),
+    onSuccess: () => {
+      void detail.refetch();
+      void related.refetch();
+    },
+    onError: (e: Error) => setError(e.message),
+  });
 
-  const act = (fn: () => Promise<unknown>) =>
-    fn()
-      .then(load)
-      .catch((e) => setError(e.message));
-
-  if (!q) return <p className="muted">{error || '加载中…'}</p>;
+  const q = detail.data;
+  if (!q) return <p className="muted">{error || detail.error?.message || '加载中…'}</p>;
 
   const canManage = q.permissions.canManage;
+  const run = (fn: () => Promise<unknown>) => mutation.mutate(fn);
+  const refresh = () => void detail.refetch();
+  const relatedList = related.data ?? [];
 
   return (
     <div className="layout">
@@ -51,14 +54,14 @@ export function QuestionDetailPage() {
           <div className="votebox">
             <button
               disabled={!me}
-              onClick={() => act(() => api.vote('QUESTION', q.id, q.myVote === 1 ? 0 : 1))}
+              onClick={() => run(() => api.vote('QUESTION', q.id, q.myVote === 1 ? 0 : 1))}
             >
               ▲
             </button>
             <b>{q.score}</b>
             <button
               disabled={!me}
-              onClick={() => act(() => api.vote('QUESTION', q.id, q.myVote === -1 ? 0 : -1))}
+              onClick={() => run(() => api.vote('QUESTION', q.id, q.myVote === -1 ? 0 : -1))}
             >
               ▼
             </button>
@@ -77,7 +80,7 @@ export function QuestionDetailPage() {
               comments={q.comments}
               targetType="QUESTION"
               targetId={q.id}
-              onDone={load}
+              onDone={refresh}
               canComment={!!me}
             />
             {canManage && (
@@ -85,7 +88,7 @@ export function QuestionDetailPage() {
                 className="link"
                 onClick={() => {
                   const points = Number(prompt('悬赏积分（10–500）', '50'));
-                  if (points) act(() => api.bounty(q.id, points, 7));
+                  if (points) run(() => api.bounty(q.id, points, 7));
                 }}
               >
                 发起悬赏
@@ -104,14 +107,14 @@ export function QuestionDetailPage() {
             <div className="votebox">
               <button
                 disabled={!me}
-                onClick={() => act(() => api.vote('ANSWER', a.id, a.myVote === 1 ? 0 : 1))}
+                onClick={() => run(() => api.vote('ANSWER', a.id, a.myVote === 1 ? 0 : 1))}
               >
                 ▲
               </button>
               <b>{a.score}</b>
               <button
                 disabled={!me}
-                onClick={() => act(() => api.vote('ANSWER', a.id, a.myVote === -1 ? 0 : -1))}
+                onClick={() => run(() => api.vote('ANSWER', a.id, a.myVote === -1 ? 0 : -1))}
               >
                 ▼
               </button>
@@ -132,17 +135,17 @@ export function QuestionDetailPage() {
               </p>
               <div className="actions">
                 {q.permissions.canAccept && !q.acceptedAnswerId && (
-                  <button onClick={() => act(() => api.accept(q.id, a.id))}>采纳此回答</button>
+                  <button onClick={() => run(() => api.accept(q.id, a.id))}>采纳此回答</button>
                 )}
                 {canManage && !a.endorsedBy && (
-                  <button onClick={() => act(() => api.endorse(a.id))}>教师认证</button>
+                  <button onClick={() => run(() => api.endorse(a.id))}>教师认证</button>
                 )}
               </div>
               <CommentList
                 comments={a.comments}
                 targetType="ANSWER"
                 targetId={a.id}
-                onDone={load}
+                onDone={refresh}
                 canComment={!!me}
               />
             </div>
@@ -161,7 +164,7 @@ export function QuestionDetailPage() {
             <button
               className="primary"
               onClick={() =>
-                act(async () => {
+                run(async () => {
                   await api.answer(q.id, draft);
                   setDraft('');
                 })
@@ -181,12 +184,12 @@ export function QuestionDetailPage() {
       <aside>
         <h3>相关问题</h3>
         <ul className="plain">
-          {related.map((r) => (
+          {relatedList.map((r) => (
             <li key={r.id}>
               <Link to={`/questions/${r.id}`}>{r.title}</Link>
             </li>
           ))}
-          {related.length === 0 && <li className="muted">暂无</li>}
+          {relatedList.length === 0 && <li className="muted">暂无</li>}
         </ul>
       </aside>
     </div>

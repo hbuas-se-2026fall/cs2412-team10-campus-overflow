@@ -1,7 +1,8 @@
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api';
-import { useAuth } from '../auth';
+import { api } from '@/api';
+import { useAuth } from '@/auth';
 
 export function AskPage() {
   const { me } = useAuth();
@@ -12,18 +13,20 @@ export function AskPage() {
   const [courseId, setCourseId] = useState<string>('');
   const [error, setError] = useState('');
 
-  const submit = async () => {
-    try {
-      const { id } = await api.ask({
-        courseId: courseId ? Number(courseId) : undefined,
-        title,
-        body,
-        tags: tags.split(/[,，\s]+/).filter(Boolean),
-      });
-      navigate(`/questions/${id}`);
-    } catch (e) {
-      setError((e as Error).message);
-    }
+  const ask = useMutation({
+    mutationFn: (payload: Parameters<typeof api.ask>[0]) => api.ask(payload),
+    onSuccess: ({ id }) => navigate(`/questions/${id}`),
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const submit = () => {
+    setError('');
+    ask.mutate({
+      courseId: courseId ? Number(courseId) : undefined,
+      title,
+      body,
+      tags: tags.split(/[,，\s]+/).filter(Boolean),
+    });
   };
 
   return (
@@ -57,8 +60,8 @@ export function AskPage() {
         </select>
       </label>
       {error && <p className="error">{error}</p>}
-      <button className="primary" onClick={submit}>
-        发布问题
+      <button className="primary" onClick={submit} disabled={ask.isPending}>
+        {ask.isPending ? '发布中…' : '发布问题'}
       </button>
     </div>
   );

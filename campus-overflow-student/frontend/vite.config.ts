@@ -12,6 +12,18 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // 按依赖来源分包：业务代码与三方库分离，避免单个 chunk 过大并提升缓存命中率。
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'data-vendor': ['@tanstack/react-query', 'zustand', 'axios'],
+          'ui-vendor': ['antd'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

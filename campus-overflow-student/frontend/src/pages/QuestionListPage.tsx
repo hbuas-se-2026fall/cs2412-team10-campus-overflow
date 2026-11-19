@@ -1,38 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { api } from '../api';
-import { useAuth } from '../auth';
-import type { Page, QuestionSummary, SearchResult } from '../types';
+import { api } from '@/api';
+import { useAuth } from '@/auth';
+import { useQuestionFilterStore } from '@/shared/store';
 
 export function QuestionListPage() {
   const { me } = useAuth();
-  const [data, setData] = useState<Page<QuestionSummary | SearchResult> | null>(null);
-  const [tags, setTags] = useState<{ name: string; questionCount: number }[]>([]);
-  const [keyword, setKeyword] = useState('');
-  const [activeTag, setActiveTag] = useState<string | undefined>();
-  const [sort, setSort] = useState('newest');
-  const [unanswered, setUnanswered] = useState(false);
-  const [error, setError] = useState('');
+  const { keyword, activeTag, sort, unanswered, setKeyword, setActiveTag, setSort, setUnanswered } =
+    useQuestionFilterStore();
 
-  useEffect(() => {
-    api
-      .popularTags()
-      .then(setTags)
-      .catch(() => undefined);
-  }, []);
+  const searching = keyword.trim() !== '' || Boolean(activeTag) || unanswered || sort !== 'newest';
 
-  useEffect(() => {
-    const searching = keyword.trim() !== '' || activeTag || unanswered || sort !== 'newest';
-    const promise = searching
-      ? api.search(keyword.trim(), { tag: activeTag, sort, unanswered })
-      : api.questions(1);
-    promise
-      .then((r) => {
-        setData(r);
-        setError('');
-      })
-      .catch((e) => setError(e.message));
-  }, [keyword, activeTag, sort, unanswered]);
+  // 服务器状态由 TanStack Query 请求 + 缓存，筛选条件作为 queryKey 的一部分自动触发重取。
+  const questions = useQuery({
+    queryKey: ['questions', { keyword, activeTag, sort, unanswered }],
+    queryFn: () =>
+      searching
+        ? api.search(keyword.trim(), { tag: activeTag, sort, unanswered })
+        : api.questions(1),
+  });
+  const popularTags = useQuery({
+    queryKey: ['popularTags'],
+    queryFn: () => api.popularTags(),
+  });
+
+  const data = questions.data;
+  const error = questions.error?.message ?? '';
+  const tags = popularTags.data ?? [];
 
   return (
     <div className="layout">
@@ -58,7 +52,7 @@ export function QuestionListPage() {
             仅看未回答
           </label>
           {me && (
-            <Link className="primary" to="/ask">
+            <Link className="primary" to="/questions/new">
               我要提问
             </Link>
           )}
@@ -71,6 +65,7 @@ export function QuestionListPage() {
           </p>
         )}
         {error && <p className="error">{error}</p>}
+        {questions.isFetching && <p className="muted">正在刷新…</p>}
 
         <ul className="qlist">
           {data?.items.map((q) => (
