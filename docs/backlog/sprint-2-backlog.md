@@ -47,7 +47,7 @@
 | T-036 | ADR-009 包结构与四层分层决策 | 提交物③（对应 PDF 的 ADR-002-package-structure） | 江思达 | To Do | 含背景 / 决策 / 后果 / 被否决方案（按上下文分包 vs 按技术分层）；说明 domain 不依赖框架的理由 |
 | T-037 | 修复 4 个乱码 ADR 文件名，补齐 003/005/006 缺失文件或从 README 摘除 | 评分·文档 20% | SM（Flagg32） | Done | `campus-overflow-student/docs/adr/README.md` 中 8 条链接全部可点，无 404 |
 | T-038 | 集成测试 `CampusOverflowFlowIT` 处置（D1 决策落地） | 提交物① | SM（Flagg32） | Done | 按 D1 执行 `@Disabled` 并写明恢复条件；README 记录构建口径 |
-| T-039 | 不变式覆盖核查：main 上定稿的 42 条不变式 × 现有 91 个单测 | 评分·不变式 25% | 柯博 | Done(待验证) | 产出 `docs/lab4/不变式-测试覆盖对照表.md`，42 条不变式均逐一对应到测试方法；实测 18 个测试类 / 91 个用例 0 失败。<br>**口径差异（待验证原因）**：本条原写「无未覆盖项」，与对照表自陈账目不一致——对照表 §1.4 记「缺口 3（7.1%）、S3 悬挂 9（21.4%）」，§四 另记 Reputation 上下文 12 条全部为 S3 悬挂；其中 co-discovery 模块 `skipTests=true`，`DiscoveryDomainTest` 5 例未执行，故「0 失败」不等于「全部执行通过」。原表述仅能支撑「42 条均已定位到对应测试方法」，不能支撑「无未覆盖项」，本条降级为待验证。<br>**后续**：据重跑结果对上述 12 条逐条重判并回填状态列与 §1.4 账目，已登记为 Sprint 3 首项（见对照表 §四 恢复动作④），完成前本条只记 Done(待验证) |
+| T-039 | 不变式覆盖核查：main 上定稿的 42 条不变式 × 现有 91 个单测 | 评分·不变式 25% | 柯博 | Done | 产出 `docs/lab4/不变式-测试覆盖对照表.md`，42 条不变式均逐一对应到测试方法；实测基线 `main` @ `866f4b9`，18 个测试类 / 91 个用例 / 0 失败 / 0 跳过（2026-11-19 复核，`mvn -B test -DskipITs`）。<br>**重判结论（2026-11-19）**：§四 Reputation 上下文 12 条已逐条重判并回填——已覆盖 6（I9-3、I9-4、I9-5、I11-2、I11-3、I11-4）、部分覆盖 2（I11-1 上界与期限非法值缺断言、I11-5 应用层编排无用例）、缺口 4（I9-1、I9-2、I10-1、I10-2：实现已落地但无任何用例以断言形式核对），「S3 悬挂」清零；§1.4 账目按重判结果重算为已覆盖 35（83.3%）/ 部分覆盖 3（7.1%）/ 缺口 4（9.5%）/ S3 悬挂 0（0.0%），有测试触达 38（90.5%）。<br>**Discovery 口径**：`co-discovery/pom.xml:32` 仍为 `<skipTests>true</skipTests>`，模块内 `TODO(S3)` 残留 32 处（`MentionParser.extract`、`Notification.create`、`Notification.markRead`、`NotificationProjector` 7 个方法、`NotificationService` 5 个方法），实现未落地，故 `skipTests` 暂不解除、`DiscoveryDomainTest` 5 例仍不执行，不计入已覆盖（见对照表 §五 A13、§6.2 B）。<br>**后续**：6 条缺口 / 部分覆盖的补充用例（I9-1 对账差额为 0、I9-2 写入口唯一性与落库次序、I10-1 流水不可变、I10-2 账本幂等、I11-1 边界、I11-5 `BountyService` 编排）与 Discovery 实现后的测试恢复，登记为 Sprint 3 后续项 |
 | T-040 | 《Lab 4 代码走查》文档，支撑全员答辩 | 评分·结构 30% | 江思达 | To Do | 按「请求进入 → 应用服务 → 聚合 → 仓储 → 返回」讲清一条链路，配模块依赖图 |
 
 ### 2.3 过程与决策（PO 职责）
@@ -62,13 +62,13 @@
 
 | 编号 | 任务 | 关联 | 责任人 | 状态 | 验收标准 |
 | --- | --- | --- | --- | --- | --- |
-| T-044 | 前端依赖与目录补齐：`@tanstack/react-query`、`zustand`、`axios`、UI 库（antd 5 或 Tailwind + 自研） | Lab5 Step1 | 江思达 / 何欣怡 | To Do | `package.json` 出现四项依赖；`main.tsx` 挂载 `QueryClientProvider`；`features/`、`shared/` 目录按模块落地 |
-| T-045 | API 客户端生成与封装：`openapi.yaml` → openapi-typescript-codegen；axios 拦截器（Token 注入、统一错误、全局 Loading） | Lab5 Step3 | 江思达 | To Do | 生成目录入库并被 `api.ts` 复用；401 统一跳登录；错误提示集中处理 |
-| T-046 | 列表页与详情页接 TanStack Query + 全局 ErrorBoundary | Lab5 Step3/4 | 何欣怡 | To Do | 列表与详情均用 `useQuery`，缓存键规范；`ErrorBoundary` 兜底未捕获异常 |
+| T-044 | 前端依赖与目录补齐：`@tanstack/react-query`、`zustand`、`axios`、UI 库（antd 5 或 Tailwind + 自研） | Lab5 Step1 | 江思达 / 何欣怡 | Done | 已随 PR #18 合入 main：`@tanstack/react-query` `^5.107.1`、`axios` `^1.21.1` 见于 `package.json`，`main.tsx` 挂载 `QueryClientProvider`（`staleTime: 30_000`、`retry: 1`、`refetchOnWindowFocus: false`），`src/` 按 `api/`、`components/`、`pages/` 分目录。<br>**偏差①（未引入 zustand）**：`package.json` 与 `src/` 全量检索无 `zustand` 依赖与引用，跨页状态以 TanStack Query 缓存 + React Context（`src/auth.tsx` 的 `AuthContext`）承载，团队口径为「不引入第二套状态库」，避免同一份会话状态出现两个事实来源。<br>**偏差②（UI 方案）**：未使用 antd 5、也未引入 Tailwind，采用自研样式表 `src/styles.css`（374 行），组件样式集中在 `src/components/`。口径登记见 `docs/lab5/SM交付说明与验收口径.md` 2.1 |
+| T-045 | API 客户端生成与封装：`openapi.yaml` → openapi-typescript-codegen；axios 拦截器（Token 注入、统一错误、全局 Loading） | Lab5 Step3 | 江思达 | Done | 已合入 main。<br>**偏差③（生成工具）**：实为 `openapi-typescript`（devDependency `^7.13.0`），`pnpm gen:api` 即 `openapi-typescript openapi.yaml -o src/api/generated/schema.ts`；产出物是**类型声明**而非 codegen 生成的可调用 SDK，因此复用方式为 `src/api/http.ts` 的 `request<T>()` 套 `schema.ts` 的 `components["schemas"]` 类型，而非原口径的「被 `api.ts` 复用」。<br>**axios 封装（`src/api/http.ts`）**：请求拦截注入 CSRF Token（读 `XSRF-TOKEN` Cookie，缺失时先经裸实例 `raw` 预取 `/v1/auth/csrf` 以避免拦截器循环，写入 `X-XSRF-TOKEN` 头），并以计数器统计并发请求、通过 `app:loading` 事件驱动全局 Loading；响应拦截统一收起 Loading，并把后端 Problem Details 归一为 `ApiError(status, code, message)`。401 未做全局 302 跳转：`src/auth.tsx` 的 `meQuery` 将 401 视为「未登录」返回 null，页面级由 `App.tsx` 的 `RequireAuth` 跳 `/login` |
+| T-046 | 列表页与详情页接 TanStack Query + 全局 ErrorBoundary | Lab5 Step3/4 | 何欣怡 | Done | 已合入 main：`QuestionListPage` 的 `listQuery`、`tagsQuery` 与 `QuestionDetailPage` 的 `detailQuery`、`relatedQuery` 均为 `useQuery`，投票 / 悬赏 / 采纳 / 认证 / 回答 / 评论 / 提问等写操作统一用 `useMutation`，全前端共 18 处 `useQuery` / `useMutation` 调用；缓存键集中于 `src/queryKeys.ts`（如 `queryKeys.questions.list(filters)`、`queryKeys.questions.popularTags()`、`queryKeys.auth.me()`）；`@/` 别名在 `vite.config.ts` 与 `tsconfig.json` 双向对齐、TS 严格模式在 `tsconfig.json` 生效（沿用 T-047 配置）；`ErrorBoundary` 与 `GlobalLoading` 已在 `main.tsx` 挂载于 `QueryClientProvider` 内，未捕获异常与全局 Loading 均有兜底 |
 | T-047 | 前端代码质量基础设施：ESLint（TS + react-hooks）、Prettier、EditorConfig、Husky pre-commit、`@/` 别名、TS 严格模式 | Lab5 Step2 | **SM（Flagg32）** | Done | `pnpm lint` / `pnpm typecheck` 双绿；`any` 提交被 pre-commit 拦截；别名在 vite 与 tsconfig 双向一致（证据：`docs/lab5/evidence/`） |
-| T-048 | CI 增加前端门禁 + 提交物验收与端到端录屏归档 | Lab5 提交物 1–4 | **SM（Flagg32）** | In Progress | CI `frontend` job 跑 lint/format:check/typecheck/build；提交物①②③ 已取证（`docs/lab5/evidence/`）；④ 端到端录屏受阻于 T-046 页面改造未合入及本地 MySQL/Redis 环境，录制规范与阻塞说明见 `docs/lab5/evidence/README.md`（≤30 秒，归档为 `e2e-*.mp4`） |
+| T-048 | CI 增加前端门禁 + 提交物验收与端到端录屏归档 | Lab5 提交物 1–4 | **SM（Flagg32）** | In Progress | CI `frontend` job 跑 lint/format:check/typecheck/build；提交物①②③ 已取证（`docs/lab5/evidence/`）。**④ 端到端录屏仍未归档**：T-046 前置已随 PR #18 合入 main 而解除（列表 / 详情 / 提问链路均已接 `useQuery` + `useMutation`），当前唯一阻塞是本地运行环境——MySQL(3306)、Redis(6379)、后端(8080)、前端 `pnpm dev`(5173) 均未运行，且本机无 Docker 无法一键拉起依赖。录制规范与阻塞现状见 `docs/lab5/evidence/README.md`（≤30 秒，归档为 `e2e-*.mp4`，录制人按分工为柯博：Step 4 提问 + 登录 + 录屏） |
 
-> 补充：T-047 / T-048 由 SM 承担的依据见 `docs/lab5/SM交付说明与验收口径.md` 第一节（PDF 未按角色分工，团队沿用 1 PO / 1 SM / 3–4 Dev 的惯例）。Lab 5 的偏差口径（未使用 lint-staged、路由命名、CI 加 lint）同文档第 2.1 节。
+> 补充：T-047 / T-048 由 SM 承担的依据见 `docs/lab5/SM交付说明与验收口径.md` 第一节（PDF 未按角色分工，团队沿用 1 PO / 1 SM / 3–4 Dev 的惯例）。Lab 5 的偏差口径（未使用 lint-staged、路由命名、CI 加 lint；未引入 zustand、UI 自研样式、生成工具用 `openapi-typescript`）同文档第 2.1 节。
 
 ---
 
@@ -121,4 +121,4 @@
 
 ---
 
-**维护人**：PO（唐志烽）　|　**最后更新**：2026-11-11（SM 补记 Lab 5 任务 T-044~T-048）　|　**分发范围**：全体团队成员、课程指导教师
+**维护人**：PO（唐志烽）　|　**最后更新**：2026-11-19（Lab 5 任务状态回填与偏差口径登记：T-044~T-046 置 Done 并登记 zustand / UI 方案 / 生成工具三项偏差，T-048 补充录屏阻塞现状）　|　**分发范围**：全体团队成员、课程指导教师
