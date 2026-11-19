@@ -8,6 +8,7 @@ import { AskPage } from './pages/AskPage';
 import { LoginPage } from './pages/LoginPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { ReputationPage } from './pages/ReputationPage';
 
 function Header() {
   const { me, logout } = useAuth();
@@ -34,6 +35,7 @@ function Header() {
       <nav>
         <Link to="/">问题</Link>
         <Link to="/leaderboard">排行榜</Link>
+        {me && <Link to="/reputation">我的声誉</Link>}
         {me && (
           <Link to="/notifications">
             通知{unread > 0 && <span className="badge">{unread}</span>}
@@ -83,6 +85,14 @@ export function App() {
             <Route path="/ask" element={<Navigate to="/questions/new" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route
+              path="/reputation"
+              element={
+                <RequireAuth>
+                  <ReputationPage />
+                </RequireAuth>
+              }
+            />
             <Route
               path="/notifications"
               element={
