@@ -17,7 +17,7 @@
 | # | 证据 | 对应判据 | 责任人 | 状态 |
 | --- | --- | --- | --- | --- |
 | 1 | 演示录屏（≤5 min，无 500） | T-065：录屏可回放且无 500 | SM（Flagg32） | 待归档（依赖 T-063 全链路可演示） |
-| 2 | FlowIT 转绿终端证据 | T-063：`mvn verify -Dit.test=CampusOverflowFlowIT` 通过 | SM（Flagg32） | 待归档（FlowIT 仍 `@Disabled`，依赖 T-052~T-057） |
+| 2 | FlowIT 转绿终端证据 | T-063：`mvn verify -Dit.test=CampusOverflowFlowIT` 通过 | SM（Flagg32） | 待归档（FlowIT 仍 `@Disabled`）。**阻塞点已定位并取证**：[flow-it-run-2026-11-19.md](flow-it-run-2026-11-19.md)（根因为 T-052 ~ T-057 的 `NotificationProjector` 未实现） |
 | 3 | `git log` 截图 + tag `sprint-3-demo` | 表 9 ①「Sprint 3 增量在 main 可演示」 | SM（Flagg32） | 待归档（冻结后打标） |
 | 4 | 回顾纪要 `docs/retro/sprint-3.md` | T-065：卡片汇总 + 2–3 项可执行改进 | SM（Flagg32） | 待产出（Retro 现场记录，不预填） |
 | 5 | ADR-010 编号与口径审核结论 | T-064：README 登记可点 | SM（Flagg32） | **已归档**：[../adr-010-review.md](../adr-010-review.md) |
@@ -30,6 +30,7 @@
 | PR #23 合并记录 | commit `c8404b25` | T-049 / T-050 / T-051 / T-064 的落地证据 |
 | CI 运行 | run `44215165936` | 前端 success、后端 success；此前两次 failure 为环境性偶发，已 rerun 排除 |
 | Lab 5 证据目录 | `docs/lab5/evidence/` | 提交物④ 端到端录屏为结转任务 T-066，见该目录 README 第三节 |
+| FlowIT 实跑取证（2026-11-19） | [flow-it-run-2026-11-19.md](flow-it-run-2026-11-19.md) | T-063 的阻塞证据：surefire 91 全绿、failsafe 3 例 1 通过 2 失败、`outbox_event` 中 3 类事件 `last_error = TODO(S3)：NotificationProjector.on 尚未实现` |
 
 ## 四、归档纪律
 

@@ -11,47 +11,60 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 /**
  * 端到端集成测试（质量场景 R-2 的验收）：注册 → 登录 → 提问 → 回答 → 采纳 → 声誉结算 → 搜索命中 → 收到通知。
  * 使用真实的 MySQL 8 与 Redis 7（Testcontainers），因此也验证了 Flyway 迁移、ngram 全文索引与发件箱中继。
  *
- * <p><b>当前状态：Sprint 2 内禁用（决策 D1，任务 T-038，行动项 A-08）。</b>
- * 本用例覆盖的链路中，声誉结算、搜索投影、通知投递三项按课程任务清单属于 S3（Sprint 3）范围，
- * 在 Sprint 2 内无法通过；若保持启用，{@code mvn clean install} 会因集成测试失败而无法全绿，
- * 从而掩盖单元测试基线的真实状态。因此按「写明理由 + 明确恢复条件」的方式临时 {@code @Disabled}，
- * 口径见 {@code docs/lab4/提交物与验收口径.md} 第三节与 {@code docs/lab4/lab4-sm-验收核对表.md}。
+ * <p><b>当前状态：仍保持禁用，但阻塞点已定位到通知投递（T-052 ~ T-057），不再是「S3 范围未开工」。</b>
+ * Sprint 3 内 SM 已把本类改造为可在无 Docker 的本机实跑（见下「外部服务模式」），并在 2026-11-19 实跑取证：
+ * 3 个用例中 1 个通过、2 个失败，根因是 {@code NotificationProjector} 的 5 个 {@code on(...)} 仍为
+ * {@code TODO(S3)} 并抛 {@link UnsupportedOperationException}，导致
+ * {@code AnswerSubmittedEvent} / {@code AnswerAcceptedEvent} / {@code BadgeAwardedEvent}
+ * 在发件箱中反复重试后仍未投递（{@code outbox_event.last_error = "TODO(S3)：NotificationProjector.on 尚未实现"}），
+ * 搜索投影因此拿不到 {@code answer_count} 与 {@code accepted}。证据见
+ * {@code docs/lab6/evidence/flow-it-run-2026-11-19.md}。
+ *
+ * <p><b>两种运行方式：</b>
+ * <ol>
+ *   <li><b>默认（CI 与有 Docker 的本机）</b>：由 Testcontainers 拉起 mysql:8.0.39（utf8mb4 + ngram=2）与
+ *       redis:7-alpine，无需任何外部依赖，命令为 {@code mvn verify -Dit.test=CampusOverflowFlowIT}。</li>
+ *   <li><b>外部服务模式（无 Docker 的本机）</b>：加 {@code -Dco.it.external=true}，并给出
+ *       {@code -Dco.it.jdbc-url=}、{@code -Dco.it.db-user=}、{@code -Dco.it.db-password=}、
+ *       {@code -Dco.it.redis-host=}、{@code -Dco.it.redis-port=}，直接连接已就绪的 MySQL 8（要求
+ *       ngram_token_size=2、库为空）与 Redis 7，跳过容器启动。该模式用于无法安装 Docker 的开发机，
+ *       判定标准与默认模式完全一致。</li>
+ * </ol>
  *
  * <p><b>恢复条件（须同时满足）：</b>
  * <ol>
- *   <li>Sprint 3 完成搜索投影、通知投递、声誉结算三项能力；</li>
- *   <li>删除本类的 {@code @Disabled}，并在本机 Docker（Testcontainers 会拉起 mysql:8.0.39 与 redis:7-alpine）
- *       下跑通 {@code mvn verify -Dit.test=CampusOverflowFlowIT}；</li>
+ *   <li>T-052 ~ T-057 完成通知投递实现，{@code NotificationProjector} 不再抛 {@code TODO(S3)}；</li>
+ *   <li>删除本类的 {@code @Disabled}，{@code mvn verify -Dit.test=CampusOverflowFlowIT} 三个用例全绿；</li>
  *   <li>构建口径由 {@code mvn clean install -DskipITs} 改回含集成测试的完整构建，并同步更新
- *       {@code campus-overflow-student/README.md}。</li>
+ *       {@code campus-overflow-student/README.md} 与 CI 配置。</li>
  * </ol>
- * 恢复工作的第一责任人是 Sprint 3 的 SM，随 Sprint 3 首个 PR 一并提交。
  */
-@Disabled("Sprint 2 内不可通过：链路含 S3 范围的声誉结算/搜索投影/通知投递；Sprint 3 完成后删除本注解并转绿（D1 / T-038 / A-08）")
+@Disabled("等待 T-052 ~ T-057：NotificationProjector 仍为 TODO(S3) 并抛 UnsupportedOperationException，"
+        + "AnswerSubmitted/AnswerAccepted/BadgeAwarded 事件无法投递，搜索投影与通知断言必然失败；"
+        + "实证见 docs/lab6/evidence/flow-it-run-2026-11-19.md（T-063）")
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
 @TestPropertySource(properties = {
         "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.session.SessionAutoConfiguration",
         "co.outbox.poll-interval-ms=200",
@@ -59,16 +72,60 @@ import org.testcontainers.utility.DockerImageName;
 })
 class CampusOverflowFlowIT {
 
-    @Container
-    @ServiceConnection
-    static MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0.39"))
-            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci",
-                    "--ngram-token-size=2");
+    /** 外部服务模式：为 true 时不启动 Testcontainers，改用 -Dco.it.* 指定的 MySQL 与 Redis。 */
+    private static final boolean EXTERNAL_MODE = Boolean.getBoolean("co.it.external");
 
-    @Container
-    @ServiceConnection(name = "redis")
-    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-            .withExposedPorts(6379);
+    private static MySQLContainer<?> mysql;
+
+    private static GenericContainer<?> redis;
+
+    static {
+        if (!EXTERNAL_MODE) {
+            mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0.39"))
+                    .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci",
+                            "--ngram-token-size=2");
+            mysql.start();
+            redis = new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379);
+            redis.start();
+        }
+    }
+
+    @DynamicPropertySource
+    static void datasourceAndRedisProperties(DynamicPropertyRegistry registry) {
+        if (EXTERNAL_MODE) {
+            registry.add("spring.datasource.url", () -> required("co.it.jdbc-url"));
+            registry.add("spring.datasource.username", () -> System.getProperty("co.it.db-user", "root"));
+            registry.add("spring.datasource.password", () -> System.getProperty("co.it.db-password", ""));
+            registry.add("spring.data.redis.host", () -> System.getProperty("co.it.redis-host", "localhost"));
+            registry.add("spring.data.redis.port", () -> System.getProperty("co.it.redis-port", "6379"));
+        } else {
+            registry.add("spring.datasource.url", mysql::getJdbcUrl);
+            registry.add("spring.datasource.username", mysql::getUsername);
+            registry.add("spring.datasource.password", mysql::getPassword);
+            registry.add("spring.data.redis.host", redis::getHost);
+            registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+        }
+    }
+
+    @AfterAll
+    static void stopContainers() {
+        if (!EXTERNAL_MODE) {
+            if (redis != null) {
+                redis.stop();
+            }
+            if (mysql != null) {
+                mysql.stop();
+            }
+        }
+    }
+
+    private static String required(String key) {
+        String value = System.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("缺少系统属性 -D" + key + "（外部服务模式 co.it.external=true 时必须提供）");
+        }
+        return value;
+    }
 
     @Autowired
     MockMvc mvc;
@@ -141,7 +198,9 @@ class CampusOverflowFlowIT {
         mvc.perform(put("/api/v1/votes").session(gang).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"targetType\":\"QUESTION\",\"targetId\":" + questionId + ",\"value\":1}"))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.code").value("QA-1015"));
+                // 不变式 I6-2「不能给自己的内容投票」的正式错误码是 QA-1006（docs/ddd/aggregates.md 第 154-155 行、
+                // docs/lab4/不变式-测试覆盖对照表.md 第 109 行），本处原写 QA-1015 与规范不符，2026-11-19 实跑后按规范修正。
+                .andExpect(jsonPath("$.code").value("QA-1006"));
     }
 
     @Test

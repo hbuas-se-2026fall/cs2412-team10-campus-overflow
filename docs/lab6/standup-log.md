@@ -37,3 +37,16 @@
 3. **D+5 里程碑剩余缺口**：通知投影（T-052/T-053）尚无分支，是 11-24「索引表有数据 + 通知表有记录」判据的唯一未覆盖项。
 
 开放 PR 存活时长点检：当前**无开放 PR**（PR #23 已于今日合并关闭），`24h 未评审 PR = 0` 达标。
+
+### 补充：SM 对 T-063 的依赖取证（本人动作记录，非他人陈述）
+
+本机无 Docker（Lab 5 已记录），Testcontainers 无法拉起 `mysql:8.0.39` / `redis:7-alpine`。SM 在 T+0 当日为 FlowIT 增加「外部服务模式」（`-Dco.it.external=true`，接本机 MySQL 8.4.8:3307 与 Redis 5.0.14.1:6379，默认路径与 CI 行为不变），从而把 T-063 从「无法验证」变为「可实跑取证」：
+
+- 单元测试：`Tests run: 91, Failures: 0, Errors: 0, Skipped: 0`；
+- 集成测试：3 例中 1 通过、1 失败、1 报错；
+- 根因：`NotificationProjector` 的 5 个 `on(...)` 仍抛 `TODO(S3)`，`AnswerSubmittedEvent` / `AnswerAcceptedEvent` / `BadgeAwardedEvent` 在 `outbox_event` 中 `published_at IS NULL`、`attempts=4`；下游表现为 `dis_search_doc.answer_count=0`、`accepted=0`；
+- 附带纠正：FlowIT 中「不能给自己的内容投票」断言写 `QA-1015`，与 `docs/ddd/aggregates.md` I6-2 的 `QA-1006` 不符，已按规范修正。
+
+结论与承诺不变：T-063 仍 `@Disabled`，等 T-052 ~ T-057 合并后 24h 内重跑。取证全文见 [evidence/flow-it-run-2026-11-19.md](evidence/flow-it-run-2026-11-19.md)。
+
+**给何欣怡的口径**：通知投影是 T-063 的唯一硬阻塞项，D+5（11-24）判据「通知表有记录」与 T-063 转绿共用同一条链路，建议优先落 `AnswerSubmittedEvent` 与 `AnswerAcceptedEvent` 两个处理器。
