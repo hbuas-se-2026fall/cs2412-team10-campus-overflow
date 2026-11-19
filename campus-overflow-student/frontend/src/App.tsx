@@ -70,15 +70,17 @@ export function App() {
         <main>
           <Routes>
             <Route path="/" element={<QuestionListPage />} />
-            <Route path="/questions/:id" element={<QuestionDetailPage />} />
             <Route
-              path="/ask"
+              path="/questions/new"
               element={
                 <RequireAuth>
                   <AskPage />
                 </RequireAuth>
               }
             />
+            <Route path="/questions/:id" element={<QuestionDetailPage />} />
+            {/* 旧地址保留，统一重定向到资源化路径 */}
+            <Route path="/ask" element={<Navigate to="/questions/new" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route

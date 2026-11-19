@@ -1,29 +1,39 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
+import { queryKeys } from '../queryKeys';
+
+type AskQuestionInput = Parameters<typeof api.ask>[0];
 
 export function AskPage() {
   const { me } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [tags, setTags] = useState('');
   const [courseId, setCourseId] = useState<string>('');
-  const [error, setError] = useState('');
 
-  const submit = async () => {
-    try {
-      const { id } = await api.ask({
-        courseId: courseId ? Number(courseId) : undefined,
-        title,
-        body,
-        tags: tags.split(/[,，\s]+/).filter(Boolean),
-      });
+  const createQuestion = useMutation({
+    mutationFn: (input: AskQuestionInput) => api.ask(input),
+    onSuccess: async ({ id }) => {
+      // 列表缓存失效：发布后返回首页即可看到刚提的问题
+      await queryClient.invalidateQueries({ queryKey: queryKeys.questions.lists() });
       navigate(`/questions/${id}`);
-    } catch (e) {
-      setError((e as Error).message);
-    }
+    },
+  });
+
+  const error = createQuestion.error?.message ?? '';
+
+  const submit = () => {
+    createQuestion.mutate({
+      courseId: courseId ? Number(courseId) : undefined,
+      title,
+      body,
+      tags: tags.split(/[,，\s]+/).filter(Boolean),
+    });
   };
 
   return (
@@ -57,8 +67,8 @@ export function AskPage() {
         </select>
       </label>
       {error && <p className="error">{error}</p>}
-      <button className="primary" onClick={submit}>
-        发布问题
+      <button className="primary" onClick={submit} disabled={createQuestion.isPending}>
+        {createQuestion.isPending ? '发布中…' : '发布问题'}
       </button>
     </div>
   );
