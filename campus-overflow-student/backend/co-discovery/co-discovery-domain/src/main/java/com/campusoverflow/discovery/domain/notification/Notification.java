@@ -1,11 +1,16 @@
 package com.campusoverflow.discovery.domain.notification;
 
+import com.campusoverflow.shared.domain.BusinessRuleException;
 import com.campusoverflow.shared.domain.ForbiddenException;
 import java.time.Instant;
 import java.util.Objects;
 
 /** 站内通知。(sourceEventId, recipientId) 唯一，事件重复投递不会产生重复通知。 */
 public class Notification {
+
+    /** 与 dis_notification.title / link 列长度保持一致，超长内容在聚合内截断，避免落库失败。 */
+    private static final int TITLE_MAX_LENGTH = 200;
+    private static final int LINK_MAX_LENGTH = 200;
 
     private Long id;
     private final long recipientId;
@@ -30,8 +35,12 @@ public class Notification {
 
     public static Notification create(long recipientId, NotificationType type, String title, String link,
                                       String sourceEventId, Instant now) {
-        // TODO(S3)：实现 Notification.create——参考领域单元测试与 arc42 文档中的业务规则
-        throw new UnsupportedOperationException("TODO(S3)：Notification.create 尚未实现");
+        Objects.requireNonNull(now, "now");
+        if (title == null || title.isBlank()) {
+            throw new BusinessRuleException("DIS-1003", "通知标题不能为空");
+        }
+        return new Notification(null, recipientId, type, truncate(title, TITLE_MAX_LENGTH),
+                truncate(link, LINK_MAX_LENGTH), sourceEventId, false, now);
     }
 
     public static Notification reconstitute(Long id, long recipientId, NotificationType type, String title,
@@ -39,9 +48,12 @@ public class Notification {
         return new Notification(id, recipientId, type, title, link, sourceEventId, read, createdAt);
     }
 
+    /** 已读状态只能由接收人本人推进，且不可逆（重复标记为已读是幂等的）。 */
     public void markRead(long actorId) {
-        // TODO(S3)：实现 Notification.markRead——参考领域单元测试与 arc42 文档中的业务规则
-        throw new UnsupportedOperationException("TODO(S3)：Notification.markRead 尚未实现");
+        if (actorId != recipientId) {
+            throw new ForbiddenException("DIS-3001", "只能操作自己的通知");
+        }
+        this.read = true;
     }
 
     public void assignId(long id) {
@@ -56,4 +68,11 @@ public class Notification {
     public String sourceEventId() { return sourceEventId; }
     public boolean read() { return read; }
     public Instant createdAt() { return createdAt; }
+
+    private static String truncate(String value, int max) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= max ? value : value.substring(0, max);
+    }
 }
