@@ -1,13 +1,14 @@
 # CampusOverflow 统一配置。默认 dev（本地 Docker Compose 起 MySQL/Redis），生产用 prod profile。
 spring:
+
   application:
     name: campus-overflow
   profiles:
     default: dev
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:campus_overflow}?useUnicode=true&characterEncoding=utf8mb4&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&rewriteBatchedStatements=true
-    username: ${DB_USER:campus}
-    password: ${DB_PASSWORD:campus_dev_pwd}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:campusoverflow}?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&rewriteBatchedStatements=true
+    username: ${DB_USER:co_user}
+    password: ${DB_PASSWORD:co_pass}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:20}
       pool-name: co-pool
