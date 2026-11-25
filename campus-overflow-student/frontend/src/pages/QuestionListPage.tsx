@@ -1,32 +1,53 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '@/api';
-import { useAuth } from '@/auth';
-import { useQuestionFilterStore } from '@/shared/store';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../api';
+import { useAuth } from '../auth';
+import { queryKeys } from '../queryKeys';
+import type { Page, QuestionSummary, SearchResult } from '../types';
 
 export function QuestionListPage() {
   const { me } = useAuth();
-  const { keyword, activeTag, sort, unanswered, setKeyword, setActiveTag, setSort, setUnanswered } =
-    useQuestionFilterStore();
+  const [keyword, setKeyword] = useState('');
+  const [activeTag, setActiveTag] = useState<string | undefined>();
+  const [sort, setSort] = useState('newest');
+  const [unanswered, setUnanswered] = useState(false);
 
-  const searching = keyword.trim() !== '' || Boolean(activeTag) || unanswered || sort !== 'newest';
+  const filters = {
+    keyword: keyword.trim(),
+    tag: activeTag,
+    sort,
+    unanswered,
+    page: 1,
+  };
+  const searching =
+    filters.keyword !== '' ||
+    filters.tag !== undefined ||
+    filters.unanswered ||
+    filters.sort !== 'newest';
 
-  // 服务器状态由 TanStack Query 请求 + 缓存，筛选条件作为 queryKey 的一部分自动触发重取。
-  const questions = useQuery({
-    queryKey: ['questions', { keyword, activeTag, sort, unanswered }],
+  // 与提问页共用 questions/list 这个键前缀：发布成功后失效一次，回到列表就能看到新问题
+  const listQuery = useQuery<Page<QuestionSummary | SearchResult>>({
+    queryKey: queryKeys.questions.list(filters),
     queryFn: () =>
       searching
-        ? api.search(keyword.trim(), { tag: activeTag, sort, unanswered })
-        : api.questions(1),
+        ? api.search(filters.keyword, {
+            tag: filters.tag,
+            sort: filters.sort,
+            unanswered: filters.unanswered,
+            page: filters.page,
+          })
+        : api.questions(filters.page),
   });
-  const popularTags = useQuery({
-    queryKey: ['popularTags'],
+
+  const tagsQuery = useQuery({
+    queryKey: queryKeys.questions.popularTags(),
     queryFn: () => api.popularTags(),
   });
 
-  const data = questions.data;
-  const error = questions.error?.message ?? '';
-  const tags = popularTags.data ?? [];
+  const data = listQuery.data;
+  const tags = tagsQuery.data ?? [];
+  const error = listQuery.error?.message ?? '';
 
   return (
     <div className="layout">
@@ -98,6 +119,7 @@ export function QuestionListPage() {
             </li>
           ))}
         </ul>
+        {listQuery.isPending && <p className="muted">加载中…</p>}
         {data && data.items.length === 0 && (
           <p className="muted">没有匹配的问题，换个关键词试试。</p>
         )}

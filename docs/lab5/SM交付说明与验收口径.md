@@ -43,6 +43,9 @@ PDF 的 Lab 5 全节**没有出现「SM」字样，也没有按角色分配任�
 | 线程/工具链版本 | Step 1 写 Node 20+ | 本地 Node 22.12.0，CI Node 20 | 均满足要求；CI 固定 20 保证与课程口径一致 |
 | 路由命名 | `/questions`、`/questions/new`、`/questions/:id` | `/`、`/ask`、`/questions/:id`（功能等价，已登录才可进 `/ask`） | 现有实现早于 Lab 5 定稿；是否对齐命名交由 Developer 在 T-048 决定，不影响验收语义 |
 | CI 中 lint 的定位 | 仅在「常见陷阱」提 `tsc --noEmit`，未设独立 CI 章节 | CI 增加 `lint` / `format:check` / `typecheck` / `build` 四步 | 属超出口径的加固，成本低、收益明确（`any` 逃逸在 PR 阶段即被拦） |
+| 未引入 zustand | Step 1「安装核心依赖」列出 `zustand` | 以 TanStack Query 缓存 + React Context 承载跨页状态，不引入第二套状态库。依据：`campus-overflow-student/frontend/package.json` 的 `dependencies` 仅有 `@tanstack/react-query` `^5.107.1`、`axios` `^1.21.1`、`react`、`react-dom`、`react-router-dom`，无 `zustand`；`src/` 全量检索无 `zustand` 引用；会话状态由 `src/auth.tsx` 的 `AuthContext`（`createContext` + `AuthProvider`）对外提供，底层数据落在 `queryKeys.auth.me()` 缓存上 | 会话态只有一个事实来源，避免 Query 缓存与 store 双写不一致；现有页面只消费 `useAuth()`，替换状态库对页面无感 |
+| UI 库自研样式 | Step 1「UI 库（antd 5 或 Tailwind + 自研）」 | 未使用 antd 5，也未引入 Tailwind / PostCSS 相关依赖，采用自研样式表。依据：`package.json` 无 `antd`、`tailwindcss`、`postcss`、`autoprefixer`；`src/main.tsx` 直接 `import './styles.css'`；`src/styles.css` 共 374 行，页面与 `src/components/`（`ErrorBoundary`、`GlobalLoading`）统一复用它 | 课程交付不引入额外 UI 依赖，构建体积与样式链路更可控；样式集中单文件，方便 Review 时逐条核对 |
+| API 客户端生成工具 | Step 3「`openapi.yaml` → openapi-typescript-codegen」 | 改用 `openapi-typescript` 生成类型。依据：`package.json` 的 `devDependencies` 含 `openapi-typescript` `^7.13.0`；`scripts.gen:api` 为 `openapi-typescript openapi.yaml -o src/api/generated/schema.ts`，产物是类型声明文件 `src/api/generated/schema.ts`，不是可调用 SDK，因此复用方式是 `src/api/http.ts` 的 `request<T>()` 套 `components["schemas"]` / `components["responses"]["Unauthorized"]` 类型，而非「生成目录被 `api.ts` 复用」 | `openapi-typescript` 只产类型、不产运行时代码，与手写 axios 封装的组合更轻，也避免生成 SDK 与 axios 实例的两套请求链路；`openapi.yaml` 变更时 `pnpm gen:api` 即可刷新类型 |
 
 ---
 
@@ -53,7 +56,7 @@ PDF 的 Lab 5 全节**没有出现「SM」字样，也没有按角色分配任�
 | ① | 前端工程 `pnpm dev` 可启动，首页可访问 | `pnpm dev` 后 `curl http://localhost:5173/` | **通过**：HTTP 200，响应含 `id="root"`，Vite ready in 374 ms | `docs/lab5/evidence/checks-green.png` |
 | ② | `pnpm lint` 与 `pnpm typecheck` 全绿 | 本地实跑两条命令 | **通过**：`lint` exit 0（无 problem），`typecheck` exit 0（无类型错误） | 同上 |
 | ③ | pre-commit 钩子可拦截不合规提交 | 造一个含 `any` 的临时文件并提交 | **通过**：ESLint 报 3 个 error（`no-explicit-any` ×2、`no-console` ×1），钩子 exit 1，提交未生成（HEAD 不变） | `docs/lab5/evidence/precommit-block-any.png` |
-| ④ | 提问 → 列表 → 详情 端到端跑通 + 30 秒内录屏 | 需前端接好后端真实接口 | **代码链路已就绪，录屏仍缺**：2026-11-19 补齐 Step 1/3/4 缺口（zustand + Ant Design 5、TanStack Query `useQuery`/`useMutation`、`@/` 别名、AppShell、`/questions/new` 路由），`lint` / `typecheck` / `build` 全绿；仍需 MySQL + Redis + 后端联调后录制 ≤30 秒视频 | 见第五节 T-048 |
+| ④ | 提问 → 列表 → 详情 端到端跑通 + 30 秒内录屏 | 需前端接好后端真实接口 | **前置已解除，待录制归档**（2026-11-19 复核）：PR #18 已合入 `main`，`src/api/http.ts`（请求/响应拦截器、CSRF 注入、全局 Loading）与 `src/api/generated/schema.ts` 已就位；原判断「**未完成**：当前 `src/` 仍用自制 `api.ts`，未接 TanStack Query / axios 拦截器」已失效，保留作历史记录。当前状态为**待录制归档**，录制人柯博；阻塞为本地运行环境未就绪——MySQL(3306)、Redis(6379)、后端(8080) 均未启动（本机无 Docker），`/ask` 页面依赖后端启动 | 见第五节 T-048 |
 
 > 补充实测：`pnpm build`（`tsc -b && vite build`）exit 0，42 modules，产物 178.38 kB（gzip 58.22 kB），构建 542 ms —— 说明严格模式下无隐式 `any` 导致的编译失败。
 
@@ -96,14 +99,16 @@ rm src/__gate_check.ts && git restore --staged src/__gate_check.ts
 
 | # | 缺口 | PDF 依据 | 归属 | 判定标准 | Backlog |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 未安装/未接入 `@tanstack/react-query`、`zustand`、`axios`、UI 库（antd 或 Tailwind） | Step 1「安装核心依赖」 | Developer（江思达 + 何欣怡） | `package.json` 出现四项依赖，且 `main.tsx` 挂载 `QueryClientProvider` | T-044 |
+| 1 | 未安装/未接入 `@tanstack/react-query`、`zustand`、`axios`、UI 库（antd 或 Tailwind）——**原判断保留作历史记录** | Step 1「安装核心依赖」 | Developer（江思达 + 何欣怡） | `package.json` 出现四项依赖，且 `main.tsx` 挂载 `QueryClientProvider`。**2026-11-19 复核：已闭环**。依据：`package.json` 的 `dependencies` 已含 `@tanstack/react-query ^5.107.1`、`axios ^1.21.1`；`src/main.tsx` 已挂载 `QueryClientProvider`（`staleTime 30_000`、`retry 1`、`refetchOnWindowFocus false`）。`zustand` 与第三方 UI 库按第 2.1 节偏差口径不做变更：会话状态由 `src/auth.tsx` 的 `AuthContext`（`createContext` + `AuthProvider`）提供，样式为自研 `src/styles.css`（374 行） | T-044（Done） |
 | 2 | `@/` 别名已配置但业务代码 0 处使用（仍用 `./pages/...` 相对路径） | Step 2「配置 path alias」 | Developer | 页面 import 改为 `@/pages/...` 形态，`pnpm build` 仍通过 | T-047 |
-| 3 | 无 axios 拦截器（Token 注入、统一错误处理、全局 Loading） | Step 3 | Developer | `api.ts` 或 `shared/http.ts` 内含请求/响应拦截器，401 跳登录有统一处理 | T-045 |
-| 4 | 未使用 openapi-typescript-codegen 生成类型 | Step 3 | Developer | `openapi.yaml` → 生成目录入库，类型被 `api.ts` 复用 | T-045 |
-| 5 | 无 TanStack Query 缓存层、无 ErrorBoundary | Step 3 / Step 4 | Developer | 列表页用 `useQuery`，详情页用 `useQuery`，全局 `ErrorBoundary` 兜底 | T-046 |
+| 3 | 无 axios 拦截器（Token 注入、统一错误处理、全局 Loading）——**原判断保留作历史记录** | Step 3 | Developer | `api.ts` 或 `shared/http.ts` 内含请求/响应拦截器，401 跳登录有统一处理。**2026-11-19 复核：已闭环**。依据：`src/api/http.ts`（97 行）请求拦截器读取 `XSRF-TOKEN` Cookie 注入 `X-XSRF-TOKEN`，缺失时先经裸实例 `raw` 预取 `/v1/auth/csrf` 以避免循环，并以并发计数器通过 `app:loading` 事件驱动全局 Loading；响应拦截器收起 Loading，将后端 Problem Details 归一为 `ApiError(status, code, message)`。401 由 `src/auth.tsx` 第 34 行 `return null; // 401 表示未登录，属于正常状态` 处理，页面级由 `App.tsx` 的 `RequireAuth` 统一跳 `/login` | T-045（Done） |
+| 4 | 未使用 openapi-typescript-codegen 生成类型——**原判断保留作历史记录** | Step 3 | Developer | `openapi.yaml` → 生成目录入库，类型被 `api.ts` 复用。**2026-11-19 复核：已闭环（工具改为 openapi-typescript）**。依据：`devDependencies` 含 `openapi-typescript ^7.13.0`，`scripts.gen:api` 为 `openapi-typescript openapi.yaml -o src/api/generated/schema.ts`，产物 `src/api/generated/schema.ts` 已入库；该产物为类型声明而非可调用 SDK，复用方式为 `src/api/http.ts` 的 `request<T>()` 套用 `components["schemas"]` / `components["responses"]["Unauthorized"]` | T-045（Done） |
+| 5 | 无 TanStack Query 缓存层、无 ErrorBoundary——**原判断保留作历史记录** | Step 3 / Step 4 | Developer | 列表页用 `useQuery`，详情页用 `useQuery`，全局 `ErrorBoundary` 兜底。**2026-11-19 复核：已闭环**。依据：`src/main.tsx` 已按 `QueryClientProvider` → `ErrorBoundary` → `GlobalLoading` → `App` 顺序挂载；`useQuery` / `useMutation` 共 18 处——列表页 `QuestionListPage`（`listQuery`、`tagsQuery`）、详情页 `QuestionDetailPage`（`detailQuery`、`relatedQuery` 及 `voteMutation`、`bountyMutation`、`acceptMutation`、`endorseMutation`、`answerMutation`、`commentMutation`）、`AskPage`（`createQuestion`）、`auth.tsx`（`csrfQuery`、`meQuery`、`loginMutation`、`logoutMutation`）、`ReputationPage`（`profileQuery`）；缓存键集中于 `src/queryKeys.ts`（如 `queryKeys.questions.list(filters)`、`queryKeys.auth.me()`） | T-046（Done） |
 | 6 | 端到端录屏（≤30 秒）缺失 | 提交物④ | Developer 操作 + SM 归档 | 后端 `mvn spring-boot:run` + 前端 `pnpm dev`，录屏含提问、列表刷新、详情查看三画面，存 `docs/lab5/evidence/e2e-*.mp4` | T-048 |
 
 **SM 判定**：① ② ③ 已由 SM 闭环并可当场复现；④ 依赖 Developer 完成上述 1–5 项后才能录屏，SM 负责在合并后复核并归档。
+
+**2026-11-19 复核说明**：上表第 1、3、4、5 项的原判断（首次复核时的状态）已随前端代码落地而失效，现均判定为**已闭环**，依据分别为 `package.json` 依赖与 `src/main.tsx` 挂载、`src/api/http.ts` 拦截器、`src/api/generated/schema.ts` 生成产物、各页面 `useQuery`/`useMutation` 与 `ErrorBoundary`；原判断文本按「保留原作者结论痕迹」的要求逐条留在表内，仅以「2026-11-19 复核」追加更新结论，未删除任何历史表述。第 1 项中 `zustand` 与第三方 UI 库两项经第 2.1 节偏差口径确认不做变更（由 `AuthContext` 与自研 `styles.css` 替代），对应偏差理由见第二节 2.1。第 2 项（`@/` 别名使用）与第 6 项（端到端录屏）状态不变：第 2 项已由 T-047 标记 Done，第 6 项仍为待录制归档，阻塞为本地 MySQL/Redis 与后端服务未就绪。据此，第四节中「④ 依赖 1–5 项」的前置条件已解除，剩余工作仅为录制与归档。
 
 ---
 

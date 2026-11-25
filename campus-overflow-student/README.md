@@ -118,40 +118,54 @@ mvn test                             # 期望：Failures: 0, Errors: 0, Skipped:
 # ③ 架构约束（FF-1 ~ FF-6，共 6 条 ArchUnit 规则）
 mvn test -pl co-bootstrap -Dtest=ArchitectureTest    # 期望：6 条规则全部通过
 
-# ④ 集成测试（当前禁用，Sprint 3 完成后恢复）
-mvn verify -Dit.test=CampusOverflowFlowIT             # 期望：Sprint 3 完成后转绿，需本机 Docker
+# ④ 集成测试（已恢复；需本机 MySQL 8 + Redis，前置条件见 9.3）
+mvn verify -Dit.test=CampusOverflowFlowIT             # 期望：3 个用例全绿
 ```
 
-### 9.2 为什么标准构建带 `-DskipITs`
+### 9.2 为什么标准构建仍带 `-DskipITs`
 
 端到端集成测试 `CampusOverflowFlowIT` 覆盖「提问 → 回答 → 采纳 → 声誉结算 → 搜索命中 → 通知送达」整条链路。
-其中**声誉结算、搜索投影、通知投递**三项按课程任务清单属于 **S3（Sprint 3）** 范围，在 Sprint 2 内不可能通过。
-若保持启用，`mvn clean install` 会因该测试失败而整体失败，**单元测试基线的真实状态将被掩盖**——
-评审时无法判断题红是因为业务没做完，还是因为代码有回归。
 
-因此按决策 **D1**，该类已加 `@Disabled` 并在类注释中写明理由与恢复条件（见
-`backend/co-bootstrap/src/test/java/com/campusoverflow/CampusOverflowFlowIT.java` 类头注释），
-构建口径相应改为「单元测试全绿 + 集成测试有理由禁用并列入 S3 恢复计划」。
-该口径已向教师书面说明（行动项 A-08，话术见 `docs/lab4/提交物与验收口径.md`「向教师的确认话术」）。
+Sprint 2 期间，其中**声誉结算、搜索投影、通知投递**三项属于 **S3（Sprint 3）** 范围，无法通过，
+因此按决策 **D1** 临时加 `@Disabled` 并向教师书面说明（行动项 A-08，话术见
+`docs/lab4/提交物与验收口径.md`「向教师的确认话术」）。该临时禁用已在 Sprint 3 的 **T-063** 解除：
+搜索投影、通知投递、声誉结算已实现，用例于 2026-11-25 实测通过（见 9.3、9.4）。
 
-### 9.3 集成测试恢复条件
+标准构建仍保留 `-DskipITs`，原因不再是「用例必然失败」，而是**该用例需要一套运行中的 MySQL 8 与 Redis**，
+评审环境不一定具备；把它塞进默认 `mvn clean install` 会让构建结果依赖环境状态。集成测试改为按 9.3 的命令显式执行，
+失败同样是硬失败（未使用 `-Dmaven.test.failure.ignore`）。
 
-以下三条须**同时**满足，方可删除 `@Disabled`：
+### 9.3 集成测试运行前置条件
 
-1. Sprint 3 完成搜索投影、通知投递、声誉结算三项能力；
-2. 在本机 Docker 下跑通 `mvn verify -Dit.test=CampusOverflowFlowIT`（Testcontainers 会拉起 `mysql:8.0.39` 与 `redis:7-alpine`）；
-3. 构建口径改回含集成测试的完整构建，并同步更新本节 9.1 与 9.2。
+`CampusOverflowFlowIT` 不再使用 Testcontainers，改为连接**本机原生 MySQL 8 与 Redis**，因此本机无 Docker 也可执行。
+默认连接参数（可用 `-Dco.it.*` 覆盖）：
 
-恢复工作的第一责任人为 Sprint 3 的 SM，随 Sprint 3 首个 PR 一并提交。
+| 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| `co.it.jdbc-url` | `jdbc:mysql://127.0.0.1:3307/campus_overflow_it` | 专用库，勿指向开发库 |
+| `co.it.db-user` / `co.it.db-password` | `root` / 空 | 需具备该库建表权限 |
+| `co.it.redis-host` / `co.it.redis-port` | `127.0.0.1` / `6379` | 任意可用 Redis 实例 |
+
+用例启动时先 `flyway.clean()` 再 `migrate()`，保证固定测试账号（`2026001` 等）可重复注册，
+所以**目标库必须是专用库**。MySQL 侧还需 `ngram_token_size=2`（全文索引按 2 字切分），否则搜索断言会失效。
+
+```bash
+# 本机 MySQL 实例（示例：独立数据目录 + 3307 端口，my.ini 中设置 ngram_token_size=2）
+mysqld --defaults-file=/path/to/my.ini
+mysql -h127.0.0.1 -P3307 -uroot -e "CREATE DATABASE IF NOT EXISTS campus_overflow_it CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"
+
+# Redis（示例：免安装 Windows 版）
+redis-server --port 6379 --bind 127.0.0.1 --save "" --appendonly no
+```
 
 ### 9.4 数字口径
 
-模块数为 **27**；集成测试 **1 个**（`CampusOverflowFlowIT`，当前禁用中）。
+模块数为 **27**；集成测试 **1 个**（`CampusOverflowFlowIT`，2026-11-25 实测 `Tests run: 3, Failures: 0, Errors: 0, Skipped: 0`）。
 
-单元测试基线：**18 个测试类 / 91 个用例，Failures 0、Errors 0、Skipped 0**（2026-11-10 实测，`mvn clean install -DskipITs` 于 `backend/` 下执行）。该基线**只增不减**；后续 Sprint 新增用例时须同步更新本行数字，删减用例须在 PR 说明中给出理由。评审核对时以当次 `mvn test` 输出为准，并把日志或截图附入 `docs/lab4/`。
+单元测试基线：**21 个测试类 / 107 个用例，Failures 0、Errors 0、Skipped 0**（2026-11-25 实测，`mvn clean install -DskipITs` 于 `backend/` 下执行）。该基线**只增不减**；后续 Sprint 新增用例时须同步更新本行数字，删减用例须在 PR 说明中给出理由。评审核对时以当次 `mvn test` 输出为准，并把日志或截图附入 `docs/lab4/`。
 
 ### 9.5 不要做的事
 
-- 不要为了让构建变绿而删除 `@Disabled` 让集成测试跑起来，也不要用 `-Dmaven.test.failure.ignore=true` 掩盖失败；
+- 不要在 Sprint 3 能力未完成时删除 `@Disabled` 让集成测试「看起来跑起来」（Sprint 3 完成后的正常恢复见 9.3）；也不要用 `-Dmaven.test.failure.ignore=true` 掩盖失败；
 - 不要修改第 1–8 节的模板原文（构建口径统一写在本节）；
 - 不要删除或放宽 `ArchitectureTest` 的规则——那是评分项「工程结构 30%」的自动化证据。

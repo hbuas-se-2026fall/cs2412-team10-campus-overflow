@@ -215,6 +215,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!-- 仅在显示指定 -Dit.test 时生效：未包含该集成测试的模块直接跳过，不判失败 -->
+                    <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
