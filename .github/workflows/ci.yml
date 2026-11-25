@@ -20,6 +20,32 @@ jobs:
   backend:
     name: 后端构建与验证
     runs-on: ubuntu-latest
+    # 集成测试所需真实依赖：由 job 级 service 容器提供 MySQL 与 Redis，
+    # 端口映射与 CampusOverflowFlowIT 的默认连接参数保持一致（3307 / 6379）。
+    # 之所以不再依赖 Testcontainers：用例已改为直连真实服务（T-063），
+    # 避免测试进程内再拉起容器导致与 service 容器重复且启动更慢。
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+          MYSQL_DATABASE: campus_overflow_it
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
     defaults:
       run:
         working-directory: campus-overflow-student
@@ -55,12 +81,18 @@ jobs:
       - name: 覆盖率门禁
         run: mvn -B -f backend/pom.xml verify -DskipITs -Djacoco.skip=false
 
-      # 阶段 5：集成测试（Testcontainers 拉起真实 MySQL + Redis）
-      # CampusOverflowFlowIT 当前按团队决策 D1 / 任务 T-038 处于 @Disabled（链路含 S3 范围的
-      # 声誉结算、搜索投影、通知投递），本阶段在 Sprint 3 恢复前不会实际执行用例，
-      # 但保留该阶段以便恢复时无需改动流水线。
+      # 阶段 5：集成测试（真实 MySQL 8.4 + Redis 7，由本 job 的 services 提供）
+      # CampusOverflowFlowIT 已在 Sprint 3 / T-063 解除 @Disabled 并改为直连真实服务，
+      # 默认连接 127.0.0.1:3307（MySQL）与 127.0.0.1:6379（Redis），与上方端口映射一致；
+      # 需要换目标时用 -Dco.it.* 覆盖，避免改动测试代码。
       - name: 集成测试
-        run: mvn -B -f backend/pom.xml verify -Dsurefire.skip=true
+        run: >-
+          mvn -B -f backend/pom.xml verify -Dsurefire.skip=true
+          -Dco.it.jdbc-url=jdbc:mysql://127.0.0.1:3307/campus_overflow_it
+          -Dco.it.db-user=root
+          -Dco.it.db-password=
+          -Dco.it.redis-host=127.0.0.1
+          -Dco.it.redis-port=6379
 
       - name: 归档测试报告
         if: always()

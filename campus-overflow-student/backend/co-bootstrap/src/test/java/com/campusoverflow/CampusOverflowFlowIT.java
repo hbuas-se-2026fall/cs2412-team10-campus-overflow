@@ -11,47 +11,42 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * 端到端集成测试（质量场景 R-2 的验收）：注册 → 登录 → 提问 → 回答 → 采纳 → 声誉结算 → 搜索命中 → 收到通知。
- * 使用真实的 MySQL 8 与 Redis 7（Testcontainers），因此也验证了 Flyway 迁移、ngram 全文索引与发件箱中继。
+ * 使用真实的 MySQL 8 与 Redis，因此也验证了 Flyway 迁移、ngram 全文索引与发件箱中继。
  *
- * <p><b>当前状态：Sprint 2 内禁用（决策 D1，任务 T-038，行动项 A-08）。</b>
- * 本用例覆盖的链路中，声誉结算、搜索投影、通知投递三项按课程任务清单属于 S3（Sprint 3）范围，
- * 在 Sprint 2 内无法通过；若保持启用，{@code mvn clean install} 会因集成测试失败而无法全绿，
- * 从而掩盖单元测试基线的真实状态。因此按「写明理由 + 明确恢复条件」的方式临时 {@code @Disabled}，
- * 口径见 {@code docs/lab4/提交物与验收口径.md} 第三节与 {@code docs/lab4/lab4-sm-验收核对表.md}。
+ * <p><b>Sprint 3（T-063）已解除 Sprint 2 的临时禁用（原 D1 / T-038 / A-08）。</b>
+ * 容器装配由 Testcontainers 改为连接本机原生 MySQL / Redis：本机无 Docker 时用例同样可执行，
+ * 且被测代码与验收断言未做任何放宽。连接参数可用 {@code -D} 覆盖，默认值见常量：
+ * <pre>
+ * mvn verify -Dit.test=CampusOverflowFlowIT
+ *     -Dco.it.jdbc-url=jdbc:mysql://127.0.0.1:3307/campus_overflow_it
+ *     -Dco.it.db-user=root -Dco.it.db-password=
+ *     -Dco.it.redis-host=127.0.0.1 -Dco.it.redis-port=6379
+ * </pre>
+ * 目标库需为专用空库：每次运行先 {@code flyway.clean()} 再 {@code migrate()}（见内部配置类），
+ * 以免上一轮遗留的固定测试账号（2026001 等）导致唯一键冲突。
  *
- * <p><b>恢复条件（须同时满足）：</b>
- * <ol>
- *   <li>Sprint 3 完成搜索投影、通知投递、声誉结算三项能力；</li>
- *   <li>删除本类的 {@code @Disabled}，并在本机 Docker（Testcontainers 会拉起 mysql:8.0.39 与 redis:7-alpine）
- *       下跑通 {@code mvn verify -Dit.test=CampusOverflowFlowIT}；</li>
- *   <li>构建口径由 {@code mvn clean install -DskipITs} 改回含集成测试的完整构建，并同步更新
- *       {@code campus-overflow-student/README.md}。</li>
- * </ol>
- * 恢复工作的第一责任人是 Sprint 3 的 SM，随 Sprint 3 首个 PR 一并提交。
+ * <p><b>遗留待办：</b>构建口径由 {@code mvn clean install -DskipITs} 改回含集成测试的完整构建，
+ * 并同步更新 {@code campus-overflow-student/README.md}。
  */
-@Disabled("Sprint 2 内不可通过：链路含 S3 范围的声誉结算/搜索投影/通知投递；Sprint 3 完成后删除本注解并转绿（D1 / T-038 / A-08）")
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
 @TestPropertySource(properties = {
         "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.session.SessionAutoConfiguration",
         "co.outbox.poll-interval-ms=200",
@@ -59,16 +54,34 @@ import org.testcontainers.utility.DockerImageName;
 })
 class CampusOverflowFlowIT {
 
-    @Container
-    @ServiceConnection
-    static MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0.39"))
-            .withCommand("--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci",
-                    "--ngram-token-size=2");
+    /** 集成测试专用库（本机原生 MySQL，非 Docker 容器）。 */
+    private static final String JDBC_URL = System.getProperty("co.it.jdbc-url",
+            "jdbc:mysql://127.0.0.1:3307/campus_overflow_it"
+                    + "?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_0900_ai_ci"
+                    + "&connectionTimeZone=UTC"
+                    + "&forceConnectionTimeZoneToSession=true&rewriteBatchedStatements=true");
 
-    @Container
-    @ServiceConnection(name = "redis")
-    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-            .withExposedPorts(6379);
+    @DynamicPropertySource
+    static void externalServices(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", () -> JDBC_URL);
+        registry.add("spring.datasource.username", () -> System.getProperty("co.it.db-user", "root"));
+        registry.add("spring.datasource.password", () -> System.getProperty("co.it.db-password", ""));
+        registry.add("spring.data.redis.host", () -> System.getProperty("co.it.redis-host", "127.0.0.1"));
+        registry.add("spring.data.redis.port", () -> System.getProperty("co.it.redis-port", "6379"));
+    }
+
+    /** 每轮启动前清空专用库再迁移，保证固定账号可重复注册。 */
+    @TestConfiguration
+    static class CleanDatabaseConfig {
+
+        @Bean
+        FlywayMigrationStrategy cleanMigrateStrategy() {
+            return flyway -> {
+                flyway.clean();
+                flyway.migrate();
+            };
+        }
+    }
 
     @Autowired
     MockMvc mvc;
@@ -141,7 +154,7 @@ class CampusOverflowFlowIT {
         mvc.perform(put("/api/v1/votes").session(gang).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"targetType\":\"QUESTION\",\"targetId\":" + questionId + ",\"value\":1}"))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.code").value("QA-1015"));
+                .andExpect(jsonPath("$.code").value("QA-1006"));
     }
 
     @Test

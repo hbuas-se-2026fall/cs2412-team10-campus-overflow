@@ -41,9 +41,9 @@
 | T-060 | 声誉计分规则三方对齐（实现 / 文档 / 测试） | 唐志烽 | T-059 | 未开始 | 无对应文档 |
 | T-061 | Sprint 3 Backlog、Planning 纪要、Review 脚本 | 唐志烽 | 全部 | 未开始 | `docs/backlog/` 现有至 sprint-2 |
 | T-062 | 分支 / PR 节奏与看板同步、站会、main 合并 | SM（Flagg32） | 无 | In Progress | 本文件 + `standup-log.md` |
-| T-063 | FlowIT 解除 @Disabled 并转绿 | SM（Flagg32） | T-049 ~ T-057 | Blocked | 依赖 T-052 ~ T-058 未完成 |
+| T-063 | FlowIT 解除 @Disabled 并转绿 | SM（Flagg32） | T-049 ~ T-057 | In Review（PR #31） | 用例已解除 `@Disabled` 并改直连真实服务，本机 3 用例全绿；CI 阶段 5 已补 MySQL / Redis service 容器，待 CI 转绿后合并 |
 | T-064 | ADR-010 关键设计 | SM（Flagg32，编号与审核） | T-050 | Done（审核归档） | `campus-overflow-student/docs/adr/010-搜索索引投影一致性.md` + `adr-010-review.md` |
-| T-065 | 演示录屏（≤5 min）+ `docs/retro/sprint-3.md` + 主持 Retro | SM（Flagg32） | T-063 | Blocked | 依赖 T-063 |
+| T-065 | 演示录屏（≤5 min）+ `docs/retro/sprint-3.md` + 主持 Retro | SM（Flagg32） | T-063 | In Progress | PR #31 合并后按 D+9 口径录制并主持 Retro |
 | T-066 | 补录 Lab 5 端到端录屏（结转） | SM（Flagg32） | 搜索可用 | Done | `docs/lab5/evidence/e2e-20261119.mp4`（23.9s）+ 该目录 README 第 3 节录制记录 |
 
 ### 2.1 需要 PO 定稿的两处口径冲突（SM 已识别，不擅自改分工）
@@ -92,7 +92,7 @@
 | frontend | `--frozen-lockfile` 安装 → ESLint → Prettier → tsc → build | 未改动前端，PR #23 未触及 `frontend/` | success |
 | images | 容器镜像（仅 push 事件） | 本机无 Docker，未复算 | pull_request 事件跳过 |
 
-> 集成测试阶段目前不实际执行用例：`CampusOverflowFlowIT` 处于 `@Disabled`（团队决策 D1 / T-038），T-063 恢复。CI 保留该阶段，恢复时无需改流水线。
+> 集成测试阶段自 T-063 起实际执行用例：`CampusOverflowFlowIT` 解除 `@Disabled` 并改为直连真实服务，CI 由 backend job 的 `services` 提供 MySQL 8.4（映射 3307）与 Redis 7（映射 6379），连接参数经 `-Dco.it.*` 注入，测试代码不再依赖 Testcontainers。
 
 ---
 
@@ -111,7 +111,7 @@
 | 任务 | 完成判据（原文） | 现状 | 下一步 / 阻塞 |
 | --- | --- | --- | --- |
 | T-062 | 每人每日更新卡片；Sprint 末 24h 未评审 PR 为 0 | 进行中：节奏规则与本快照已入库；PR #23 于提出后 <24h 完成评审与合并 | 每日按第二节回填；对 T-052 ~ T-061 无分支的成员在站会点检 |
-| T-063 | `mvn verify -Dit.test=CampusOverflowFlowIT` 通过，覆盖「注册→提问→回答→采纳→声誉 +15→搜索命中→收到通知」 | 阻塞：依赖 T-052 ~ T-057，通知与声誉链路尚未实现 | 待 T-052/T-053 与 T-055~T-057 合并后解除 `@Disabled`；当前不放宽判据 |
+| T-063 | `mvn verify -Dit.test=CampusOverflowFlowIT` 通过，覆盖「注册→提问→回答→采纳→声誉 +15→搜索命中→收到通知」 | 进行中（PR #31）：本机 `mvn verify -Dit.test=CampusOverflowFlowIT` BUILD SUCCESS，3 用例全绿；单测 21 个测试类 / 107 用例全绿 | CI 已补真实 MySQL + Redis service 容器，流水线转绿后合并 #31，并把本行改写为 Done |
 | T-064 | 含背景 / 决策 / 后果 / 被否决方案；ADR README 登记可点 | 达成：ADR-010 已合并且 README 索引可点；SM 已出编号与口径审核结论 | 若 PO 要求 SM 独立再写一份，按 Planning 纪要调整 |
-| T-065 | 录屏可回放且无 500；纪要含卡片汇总与 2–3 项可执行改进 | 阻塞：依赖 T-063 与可演示的完整链路 | Retro 纪要与卡片汇总必须来自真实回顾会，不预填 |
+| T-065 | 录屏可回放且无 500；纪要含卡片汇总与 2–3 项可执行改进 | 未开始：依赖 T-063 合并后的可演示完整链路 | Retro 纪要与卡片汇总必须来自真实回顾会，不预填 |
 | T-066 | 录屏可回放，三画面齐全（提问 → 列表 → 详情） | 达成（2026-11-19）：`e2e-20261119.mp4` 1280×720 / 23.9s，三画面齐全，URL 徽标可辨认路由；录制人、时间、前后端 commit 均已记录 | 归档至 `docs/lab5/evidence/` 完成，README「待归档」已改实链；后续链路变动需重录 |
