@@ -7,7 +7,7 @@ import { LeaderboardPage } from './pages/LeaderboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { QuestionDetailPage } from './pages/QuestionDetailPage';
-import { QuestionListPage } from './pages/QuestionListPage';
+import QuestionListPage from './pages/QuestionListPage';
 import { ReputationPage } from './pages/ReputationPage';
 import { AppShell } from './shared/AppShell';
 
