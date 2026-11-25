@@ -22,7 +22,6 @@ export default function QuestionListPage() {
     );
   }
 
-  // getV1Questions 返回 QuestionSummaryPage，items 已由生成的客户端类型约束，无需 any 断言。
   const items: QuestionSummary[] = data?.items ?? [];
 
   return (
