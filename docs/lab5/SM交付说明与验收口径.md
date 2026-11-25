@@ -95,8 +95,6 @@ rm src/__gate_check.ts && git restore --staged src/__gate_check.ts
 
 ## 五、验收缺口清单（交 Developer，SM 复核）
 
-> **2026-11-19 补齐状态**：下表第 1–5 项已全部补齐并实跑验证——`zustand@5.1.0` 与 `antd@5.29.3` 已安装且 `pnpm-lock.yaml` 同步；11 个源码文件改用 `@/` 别名；列表 / 详情用 `useQuery`、提问与写操作用 `useMutation`；`src/shared/store.ts`（zustand）与 `src/shared/AppShell.tsx`（Header + Sidebar + Outlet）已落地；`format` / `typecheck` / `lint` / `build` 均 exit 0（1550 modules，最大 chunk 441.53 kB）。**第 6 项（端到端录屏）仍缺**，受 MySQL / Redis / Docker 环境阻塞，补齐步骤见 `docs/lab-audit/证据补齐指引.md` 第 8 节。下表保留 2026-11-11 的原始缺口记录供追溯。
-
 | # | 缺口 | PDF 依据 | 归属 | 判定标准 | Backlog |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 未安装/未接入 `@tanstack/react-query`、`zustand`、`axios`、UI 库（antd 或 Tailwind）——**原判断保留作历史记录** | Step 1「安装核心依赖」 | Developer（江思达 + 何欣怡） | `package.json` 出现四项依赖，且 `main.tsx` 挂载 `QueryClientProvider`。**2026-11-19 复核：已闭环**。依据：`package.json` 的 `dependencies` 已含 `@tanstack/react-query ^5.107.1`、`axios ^1.21.1`；`src/main.tsx` 已挂载 `QueryClientProvider`（`staleTime 30_000`、`retry 1`、`refetchOnWindowFocus false`）。`zustand` 与第三方 UI 库按第 2.1 节偏差口径不做变更：会话状态由 `src/auth.tsx` 的 `AuthContext`（`createContext` + `AuthProvider`）提供，样式为自研 `src/styles.css`（374 行） | T-044（Done） |
@@ -130,4 +128,3 @@ rm src/__gate_check.ts && git restore --staged src/__gate_check.ts
 ---
 
 **维护人**：SM（左焱之 / Flagg32）｜**分发范围**：Overflow Crew 全员、课程指导教师
-**补齐复核**：PO（唐志烽 / luck970），2026-11-19（第 1–5 项缺口关闭，第 6 项录屏待环境就绪）

@@ -76,9 +76,6 @@ export function QuestionDetailPage() {
   const q = detailQuery.data;
   const related = relatedQuery.data ?? [];
   const canManage = q.permissions.canManage;
-  const run = (fn: () => Promise<unknown>) => mutation.mutate(fn);
-  const refresh = () => void detail.refetch();
-  const relatedList = related.data ?? [];
 
   return (
     <div className="layout">
@@ -240,12 +237,12 @@ export function QuestionDetailPage() {
       <aside>
         <h3>相关问题</h3>
         <ul className="plain">
-          {relatedList.map((r) => (
+          {related.map((r) => (
             <li key={r.id}>
               <Link to={`/questions/${r.id}`}>{r.title}</Link>
             </li>
           ))}
-          {relatedList.length === 0 && <li className="muted">暂无</li>}
+          {related.length === 0 && <li className="muted">暂无</li>}
         </ul>
       </aside>
     </div>

@@ -44,7 +44,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"demo\",\n  \"password\": \"demo12345\"\n}"
+              "raw": "{\n  \"username\": \"2023001\",\n  \"password\": \"Campus2026\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
           }
@@ -85,7 +85,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"courseId\": 100,\n  \"title\": \"红黑树插入后为什么必须旋转？\",\n  \"body\": \"仅靠变色为什么无法恢复平衡？希望有一个直观的解释，最好能给出一个反例。\",\n  \"tags\": [\"数据结构\", \"红黑树\"]\n}"
+              "raw": "{\n  \"courseId\": 1,\n  \"title\": \"红黑树插入后为什么必须旋转？\",\n  \"body\": \"仅靠变色为什么无法恢复平衡？希望有一个直观的解释，最好能给出一个反例。\",\n  \"tags\": [\"数据结构\", \"红黑树\"]\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/questions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "questions"] }
           }
@@ -99,7 +99,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "questions"],
               "query": [
-                { "key": "courseId", "value": "100", "disabled": true },
+                { "key": "courseId", "value": "1", "disabled": true },
                 { "key": "page", "value": "1" },
                 { "key": "size", "value": "20" }
               ]
@@ -123,7 +123,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"courseId\": 100,\n  \"title\": \"红黑树插入后为什么必须旋转（已更新）？\",\n  \"body\": \"更新后的问题正文：仅靠变色无法恢复平衡，需要旋转来调整黑高。\",\n  \"tags\": [\"数据结构\", \"红黑树\", \"平衡树\"]\n}"
+              "raw": "{\n  \"courseId\": 1,\n  \"title\": \"红黑树插入后为什么必须旋转（已更新）？\",\n  \"body\": \"更新后的问题正文：仅靠变色无法恢复平衡，需要旋转来调整黑高。\",\n  \"tags\": [\"数据结构\", \"红黑树\", \"平衡树\"]\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "questions", "{{questionId}}"] }
           }
