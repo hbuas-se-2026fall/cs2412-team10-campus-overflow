@@ -1,17 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { App } from './App';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { GlobalLoading } from './components/GlobalLoading';
+import App from './App';
 import './styles.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { OpenAPI } from './api/generated/core/OpenAPI';
 
+// 1. 配置生成的 API 客户端指向代理路径
+OpenAPI.BASE = '/api';
+
+// 2. 创建 React Query 客户端
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
-      retry: 1,
-      refetchOnWindowFocus: false,
+      retry: 1, // 失败重试1次
+      refetchOnWindowFocus: false, // 窗口聚焦时不自动刷新
     },
   },
 });
@@ -19,10 +21,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <GlobalLoading />
-        <App />
-      </ErrorBoundary>
+      <App />
     </QueryClientProvider>
   </React.StrictMode>,
 );
