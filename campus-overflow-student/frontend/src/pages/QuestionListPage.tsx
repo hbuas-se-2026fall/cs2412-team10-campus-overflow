@@ -1,17 +1,15 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { queryKeys } from '../queryKeys';
+import { useQuestionFilterStore } from '../shared/store';
 import type { Page, QuestionSummary, SearchResult } from '../types';
 
 export function QuestionListPage() {
   const { me } = useAuth();
-  const [keyword, setKeyword] = useState('');
-  const [activeTag, setActiveTag] = useState<string | undefined>();
-  const [sort, setSort] = useState('newest');
-  const [unanswered, setUnanswered] = useState(false);
+  const { keyword, activeTag, sort, unanswered, setKeyword, setActiveTag, setSort, setUnanswered } =
+    useQuestionFilterStore();
 
   const filters = {
     keyword: keyword.trim(),
