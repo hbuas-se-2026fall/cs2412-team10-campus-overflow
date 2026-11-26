@@ -169,5 +169,36 @@ class QuestionTest {
             assertThat(q.acceptedAnswerId()).isNull();
             assertThat(q.isDeleted()).isTrue();
         }
+
+        @Test
+        void strangerCannotDeleteTheQuestion() {
+            Question q = persistedQuestion();
+            assertThatThrownBy(() -> q.softDelete(OTHER, false, NOW)).isInstanceOf(ForbiddenException.class)
+                    .hasMessageContaining("只有作者或课程管理者");
+            assertThat(q.isDeleted()).isFalse();
+        }
+
+        @Test
+        void idCanBeAssignedOnlyOnce() {
+            Question q = persistedQuestion();
+            assertThatThrownBy(() -> q.assignId(99)).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("ID 已分配");
+        }
+
+        @Test
+        void reconstitutedQuestionExposesPersistedFields() {
+            Question q = Question.reconstitute(10L, ASKER.userId(), 100L,
+                    new Title("一个用于还原字段的完整问题标题"),
+                    MarkdownBody.ofQuestion("这是还原问题时带回来的正文内容，长度足够通过校验。"),
+                    Tags.of(List.of("java")), 50L, 3, 2, 1, NOW, NOW.plusSeconds(30), NOW.plusSeconds(60), 4L);
+
+            assertThat(q.authorId()).isEqualTo(ASKER.userId());
+            assertThat(q.courseId()).isEqualTo(100L);
+            assertThat(q.score()).isEqualTo(3);
+            assertThat(q.answerCount()).isEqualTo(2);
+            assertThat(q.viewCount()).isEqualTo(1);
+            assertThat(q.deletedAt()).isEqualTo(NOW.plusSeconds(60));
+            assertThat(q.version()).isEqualTo(4L);
+        }
     }
 }

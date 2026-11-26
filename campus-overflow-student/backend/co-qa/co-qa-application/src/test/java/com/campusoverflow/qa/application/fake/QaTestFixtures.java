@@ -3,6 +3,7 @@ package com.campusoverflow.qa.application.fake;
 import com.campusoverflow.identity.api.CourseSummary;
 import com.campusoverflow.identity.api.IdentityApi;
 import com.campusoverflow.identity.api.UserSummary;
+import com.campusoverflow.qa.application.port.ContentRenderer;
 import com.campusoverflow.qa.application.port.QuestionListCache;
 import com.campusoverflow.qa.application.query.QuestionSummaryView;
 import com.campusoverflow.qa.domain.Answer;
@@ -11,6 +12,7 @@ import com.campusoverflow.qa.domain.Comment;
 import com.campusoverflow.qa.domain.CommentRepository;
 import com.campusoverflow.qa.domain.Question;
 import com.campusoverflow.qa.domain.QuestionRepository;
+import com.campusoverflow.qa.domain.TagRepository;
 import com.campusoverflow.qa.domain.TargetType;
 import com.campusoverflow.qa.domain.Vote;
 import com.campusoverflow.qa.domain.VoteRepository;
@@ -92,6 +94,46 @@ public final class QaTestFixtures {
         @Override
         public void adjustScore(long answerId, int delta) {
             scoreDeltas.merge(answerId, delta, Integer::sum);
+        }
+    }
+
+    public static class InMemoryComments implements CommentRepository {
+        private final Map<Long, Comment> store = new LinkedHashMap<>();
+        private final AtomicLong sequence = new AtomicLong();
+
+        @Override
+        public Optional<Comment> findById(long id) {
+            return Optional.ofNullable(store.get(id));
+        }
+
+        @Override
+        public Comment save(Comment comment) {
+            if (comment.id() == null) {
+                comment.assignId(sequence.incrementAndGet());
+            }
+            store.put(comment.id(), comment);
+            return comment;
+        }
+    }
+
+    public static class StubTags implements TagRepository {
+        public final Map<String, Integer> usage = new HashMap<>();
+
+        @Override
+        public void adjustUsage(Collection<String> tagNames, int delta) {
+            tagNames.forEach(name -> usage.merge(name, delta, Integer::sum));
+        }
+    }
+
+    public static class StubRenderer implements ContentRenderer {
+        @Override
+        public String toSafeHtml(String markdown) {
+            return "<p>" + markdown + "</p>";
+        }
+
+        @Override
+        public String toPlainText(String markdown, int maxLength) {
+            return markdown.length() <= maxLength ? markdown : markdown.substring(0, maxLength);
         }
     }
 
