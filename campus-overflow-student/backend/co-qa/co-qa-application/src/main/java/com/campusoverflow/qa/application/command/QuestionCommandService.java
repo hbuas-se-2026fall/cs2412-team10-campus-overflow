@@ -78,9 +78,10 @@ public class QuestionCommandService {
         Tags tagList = Tags.of(cmd.tags());
         Instant now = Instant.now(clock);
         boolean manager = identity.canManageCourse(actor.userId(), q.courseId());
+        Set<String> tagsBefore = new HashSet<>(q.tags().names());
         q.edit(actor, manager, title, body, tagList, now);
         questions.save(q);
-        tags.adjustUsage(tagList.names(), 1);
+        adjustTagUsage(tagsBefore, tagList.names());
         String plainText = renderer.toPlainText(body.value(), PLAIN_TEXT_FOR_INDEX);
         events.publish(new QuestionEditedEvent(EventIds.next(), now, q.id(), title.value(), plainText, tagList.names()));
         listCache.invalidateAll();
@@ -92,11 +93,26 @@ public class QuestionCommandService {
         Question q = load(questionId);
         boolean manager = identity.canManageCourse(actor.userId(), q.courseId());
         Instant now = Instant.now(clock);
+        Set<String> tagsBefore = new HashSet<>(q.tags().names());
         q.softDelete(actor, manager, now);
         questions.save(q);
+        tags.adjustUsage(tagsBefore, -1);
         events.publish(new ContentDeletedEvent(EventIds.next(), now, "QUESTION", q.id(), q.id()));
         listCache.invalidateAll();
         audit.record("QUESTION_DELETED", actor.userId(), "QUESTION", String.valueOf(q.id()), null);
+    }
+
+    /**
+     * 按差集维护标签使用计数：只有新挂上的标签 +1、被摘掉的标签 -1。
+     * 编辑时若整体按新集合加一次，未变化的标签会被反复累加，标签热度会持续虚高。
+     */
+    private void adjustTagUsage(Set<String> before, List<String> after) {
+        Set<String> added = new HashSet<>(after);
+        added.removeAll(before);
+        Set<String> removed = new HashSet<>(before);
+        removed.removeAll(after);
+        tags.adjustUsage(added, 1);
+        tags.adjustUsage(removed, -1);
     }
 
     private Question load(long questionId) {
