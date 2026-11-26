@@ -24,7 +24,7 @@
 | 实际结果 | `question_count` 随编辑次数线性虚高，删除后永不回落，标签排序与「热门标签」失去参考价值 |
 | 根因 | `edit` 对提交的完整标签集合无差别调用 `adjustUsage(tags, +1)`，未与编辑前的集合做差集；`delete` 只在软删问题时回收回答计数，完全没有对标签做减量 |
 | 修复 | 新增私有方法 `adjustTagUsage(Set<String> before, List<String> after)`，按差集处理：仅新增的标签 +1、仅被摘掉的标签 -1、未变化的标签不产生变更；`edit` 与 `delete` 均改为调用该方法 |
-| 修复 PR | 本 PR（`fix(qa,reputation): 修正标签计数漂移与已删回答认证校验`） |
+| 修复 PR | #37 |
 | 回归测试 | `TagUsageAndEndorseRegressionTest`：`editOnlyCountsNewlyAddedTags`、`editReclaimsDroppedTags`、`editWithSameTagsTouchesNoCounter`、`deletingQuestionReclaimsTagUsage` |
 
 ### D-QA-02　已被软删除的回答仍可被教师认证
@@ -37,7 +37,7 @@
 | 实际结果 | 已下线的回答获得认证标记，同时触发 `AnswerEndorsedEvent`，使已删除内容进入搜索与声誉链路，与「软删除后内容不可再参与交互」的规则（`QA-2004` 已在采纳、投票、评论路径拦截）不一致 |
 | 根因 | `endorse` 只校验操作者是否为课程管理者（`identity.canManageCourse`），未校验回答自身是否已被软删除；同类校验在同聚合的 `accept` 路径已有 `ensureNotDeleted()`，认证路径遗漏 |
 | 修复 | `endorse` 入口补 `ensureNotDeleted()`，已删除回答抛出 `DomainException("QA-2004")` |
-| 修复 PR | 本 PR（同上） |
+| 修复 PR | #37 |
 | 回归测试 | `TagUsageAndEndorseRegressionTest`：`deletedAnswerCannotBeEndorsed`（断言错误码 `QA-2004` 且未写入认证人）、`activeAnswerCanStillBeEndorsed` |
 
 ## 三、已登记待排期
