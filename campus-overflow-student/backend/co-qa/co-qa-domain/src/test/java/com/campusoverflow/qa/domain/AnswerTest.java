@@ -45,4 +45,48 @@ class AnswerTest {
         assertThatThrownBy(() -> a.softDelete(stranger, false, false, QuestionTest.NOW))
                 .isInstanceOf(ForbiddenException.class);
     }
+
+    @Test
+    void authorCanEditOwnAnswer() {
+        Question q = QuestionTest.persistedQuestion();
+        Answer a = QuestionTest.persistedAnswer(q, answerer.userId(), 50);
+
+        a.edit(answerer, false, MarkdownBody.ofAnswer("补充：叔叔节点为黑色时才需要旋转。"), QuestionTest.NOW.plusSeconds(60));
+
+        assertThat(a.body().value()).contains("叔叔节点");
+        assertThat(a.updatedAt()).isAfter(a.createdAt());
+    }
+
+    @Test
+    void deletedAnswerCannotBeEdited() {
+        Question q = QuestionTest.persistedQuestion();
+        Answer a = QuestionTest.persistedAnswer(q, answerer.userId(), 50);
+        a.softDelete(answerer, false, false, QuestionTest.NOW);
+
+        assertThatThrownBy(() -> a.edit(answerer, false, MarkdownBody.ofAnswer("已删除后又尝试修改的内容"), QuestionTest.NOW))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("已被删除");
+    }
+
+    @Test
+    void idCanBeAssignedOnlyOnce() {
+        Question q = QuestionTest.persistedQuestion();
+        Answer a = QuestionTest.persistedAnswer(q, answerer.userId(), 50);
+        assertThatThrownBy(() -> a.assignId(51)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ID 已分配");
+    }
+
+    @Test
+    void reconstitutedAnswerExposesPersistedFields() {
+        Answer a = Answer.reconstitute(50L, 10L, answerer.userId(),
+                MarkdownBody.ofAnswer("这是从持久层还原回来的回答正文内容。"), 3, 9L,
+                QuestionTest.NOW, QuestionTest.NOW.plusSeconds(20), QuestionTest.NOW.plusSeconds(40), 2L);
+
+        assertThat(a.authorId()).isEqualTo(answerer.userId());
+        assertThat(a.body().value()).contains("还原");
+        assertThat(a.score()).isEqualTo(3);
+        assertThat(a.createdAt()).isEqualTo(QuestionTest.NOW);
+        assertThat(a.updatedAt()).isEqualTo(QuestionTest.NOW.plusSeconds(20));
+        assertThat(a.deletedAt()).isEqualTo(QuestionTest.NOW.plusSeconds(40));
+        assertThat(a.version()).isEqualTo(2L);
+    }
 }

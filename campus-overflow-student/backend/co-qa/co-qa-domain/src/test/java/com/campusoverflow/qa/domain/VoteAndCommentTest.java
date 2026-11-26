@@ -49,4 +49,29 @@ class VoteAndCommentTest {
         assertThatThrownBy(() -> Comment.post(TargetType.QUESTION, 10, 10, 1, top, "挂错位置的回复", NOW))
                 .isInstanceOf(BusinessRuleException.class);
     }
+
+    @Test
+    void reconstitutedVoteExposesFieldsAndRejectsDuplicateId() {
+        Vote v = Vote.reconstitute(7L, 1, TargetType.ANSWER, 50, -1, NOW.plusSeconds(15));
+
+        assertThat(v.id()).isEqualTo(7L);
+        assertThat(v.voterId()).isEqualTo(1);
+        assertThat(v.targetType()).isEqualTo(TargetType.ANSWER);
+        assertThat(v.targetId()).isEqualTo(50);
+        assertThat(v.updatedAt()).isEqualTo(NOW.plusSeconds(15));
+        v.assignId(8L);
+        assertThat(v.id()).isEqualTo(8L);
+    }
+
+    @Test
+    void reconstitutedCommentExposesFieldsAndRejectsDuplicateId() {
+        Comment c = Comment.reconstitute(4L, TargetType.QUESTION, 10, 10, 3, null, "还原回来的评论内容",
+                NOW.plusSeconds(25));
+
+        assertThat(c.questionId()).isEqualTo(10);
+        assertThat(c.authorId()).isEqualTo(3);
+        assertThat(c.createdAt()).isEqualTo(NOW.plusSeconds(25));
+        assertThatThrownBy(() -> c.assignId(5L)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ID 已分配");
+    }
 }
