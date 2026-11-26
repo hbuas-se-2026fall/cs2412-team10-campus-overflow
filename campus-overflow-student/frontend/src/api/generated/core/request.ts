@@ -4,7 +4,10 @@
 /* eslint-disable */
 import axios from 'axios';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse, AxiosInstance } from 'axios';
-import FormData from 'form-data';
+// 浏览器使用原生 FormData（Web API）。此处不可导入 Node 的 form-data 包：
+// 一是该包未在 package.json 声明，Vite 预构建时会报 "could not be resolved"；
+// 二是它会使下方 `value instanceof FormData` 对浏览器原生 FormData 永远为 false。
+// getHeaders 已用 `typeof formData?.getHeaders === 'function'` 做守卫，删除后行为安全。
 
 import { ApiError } from './ApiError';
 import type { ApiRequestOptions } from './ApiRequestOptions';
@@ -152,7 +155,11 @@ export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptio
         resolve(options, config.HEADERS),
     ]);
 
-    const formHeaders = typeof formData?.getHeaders === 'function' && formData?.getHeaders() || {}
+    // getHeaders() 仅 Node 的 form-data 实例具备，浏览器原生 FormData 没有（Content-Type 由 axios 自行设置）。
+    // 收窄为可选方法后按需调用，避免直接访问不存在的成员导致类型报错。
+    const nodeFormData = formData as unknown as { getHeaders?: () => Record<string, string> };
+    const formHeaders: Record<string, string> =
+        typeof nodeFormData?.getHeaders === 'function' ? (nodeFormData.getHeaders() ?? {}) : {};
 
     const headers = Object.entries({
         Accept: 'application/json',
