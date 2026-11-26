@@ -61,6 +61,7 @@ public class Answer {
         if (!actorManagesCourse) {
             throw new ForbiddenException("QA-2003", "只有课程教师/助教可以为回答加认证");
         }
+        ensureNotDeleted();
         if (this.endorsedBy != null) {
             throw new ConflictException("QA-2003", "该回答已被认证，不能重复认证");
         }
